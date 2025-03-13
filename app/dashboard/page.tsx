@@ -258,17 +258,17 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Feed Consumption</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₵23,950</div>
-                <p className="text-xs text-muted-foreground">+₵9,000 from new orders</p>
+                <div className="text-2xl font-bold">95.2 kg</div>
+                <p className="text-xs text-muted-foreground">-2.5 kg from yesterday</p>
                 <div className="mt-4">
-                  <Progress value={65} className="h-2" />
+                  <Progress value={85} className="h-2" />
                 </div>
               </CardContent>
-            </Card>
+            </Card> 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Upcoming Vaccinations</CardTitle>
