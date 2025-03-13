@@ -203,7 +203,7 @@ export default function OrdersPage() {
       console.log(error)
       setStatus({ 
         type: 'error', 
-        message: error.message || 'Failed to verify OTP. Please try again.' 
+        message: error.message || 'Failed to create order. Please try again.' 
       });
     } finally {
       setSubmitting(false);
@@ -710,13 +710,13 @@ export default function OrdersPage() {
             <CardDescription>Order statistics and metrics</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium">Total Revenue</div>
                 <div className="text-sm font-medium">₵{calculateTotalRevenue().toLocaleString()}</div>
               </div>
               <Progress value={75} className="h-2" />
-            </div>
+            </div> */}
 
             <div className="space-y-4">
               <h4 className="text-sm font-medium">Order Breakdown</h4>
