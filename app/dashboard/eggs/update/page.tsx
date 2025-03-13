@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -27,6 +28,8 @@ interface EggUpdateData {
   coopId: string
   date: Date
   eggsCollected: number
+  crates: number
+  remainder: number
   brokenEggs: number
   feedConsumed: number
   notes: string
@@ -41,6 +44,8 @@ export default function EggUpdatePage() {
     coopId: "",
     date: new Date(),
     eggsCollected: 0,
+    crates: 0,
+    remainder: 0,
     brokenEggs: 0,
     feedConsumed: 0,
     notes: "",
@@ -139,6 +144,8 @@ export default function EggUpdatePage() {
         coopId: "",
         date: new Date(),
         eggsCollected: 0,
+        crates: 0,
+        remainder: 0,
         brokenEggs: 0,
         feedConsumed: 0,
         notes: "",
@@ -240,23 +247,71 @@ export default function EggUpdatePage() {
                 {errors.date && <p className="text-sm text-red-500">{errors.date}</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="eggsCollected">Eggs Collected</Label>
-                <Input
-                  id="eggsCollected"
-                  type="number"
-                  min="0"
-                  value={formData.eggsCollected}
-                  onChange={(e) => {
-                    setFormData({ ...formData, eggsCollected: Number.parseInt(e.target.value) || 0 })
-                    if (errors.eggsCollected) {
-                      setErrors({ ...errors, eggsCollected: "" })
-                    }
-                  }}
-                  className={errors.eggsCollected ? "border-red-500" : ""}
-                  disabled={isSubmitting}
-                />
-                {errors.eggsCollected && <p className="text-sm text-red-500">{errors.eggsCollected}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="crates">Crates Collected</Label>
+                  <Input
+                    id="crates"
+                    type="number"
+                    min="0"
+                    value={formData.crates || 0}
+                    onChange={(e) => {
+                      const crates = Number.parseInt(e.target.value) || 0
+                      const remainder = formData.remainder || 0
+                      setFormData({
+                        ...formData,
+                        crates: crates,
+                        eggsCollected: crates * 30 + remainder,
+                      })
+                      if (errors.crates) {
+                        setErrors({ ...errors, crates: "" })
+                      }
+                    }}
+                    className={errors.crates ? "border-red-500" : ""}
+                    disabled={isSubmitting}
+                  />
+                  {errors.crates && <p className="text-sm text-red-500">{errors.crates}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="remainder">Remainder Eggs</Label>
+                  <Input
+                    id="remainder"
+                    type="number"
+                    min="0"
+                    max="29"
+                    value={formData.remainder || 0}
+                    onChange={(e) => {
+                      const remainder = Number.parseInt(e.target.value) || 0
+                      const crates = formData.crates || 0
+                      setFormData({
+                        ...formData,
+                        remainder: remainder,
+                        eggsCollected: crates * 30 + remainder,
+                      })
+                      if (errors.remainder) {
+                        setErrors({ ...errors, remainder: "" })
+                      }
+                    }}
+                    className={errors.remainder ? "border-red-500" : ""}
+                    disabled={isSubmitting}
+                  />
+                  {errors.remainder && <p className="text-sm text-red-500">{errors.remainder}</p>}
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="eggsCollected">Total Eggs Collected</Label>
+                  <Input
+                    id="eggsCollected"
+                    type="number"
+                    min="0"
+                    value={formData.eggsCollected}
+                    readOnly
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">Automatically calculated from crates and remainder</p>
+                </div>
               </div>
 
               <div className="space-y-2">
