@@ -20,28 +20,28 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const routes = [
     {
-      href: "/dashboard/admin",
+      href: "admin",
       label: "Analytics",
       icon: BarChart3,
-      active: pathname === "/dashboard/admin",
+      active: pathname === "",
     },
     {
-      href: "/dashboard/admin/users",
+      href: "admin/users",
       label: "Users",
       icon: Users,
-      active: pathname === "/dashboard/admin/users",
+      active: pathname === "admin/users",
     },
     {
-      href: "/dashboard/admin/admins",
+      href: "admins",
       label: "Admins",
       icon: ShieldCheck,
-      active: pathname === "/dashboard/admin/admins",
+      active: pathname === "admins",
     },
     {
-      href: "/dashboard/admin/expenditures",
+      href: "expenditures",
       label: "Expenditures",
       icon: DollarSign,
-      active: pathname === "/dashboard/admin/expenditures",
+      active: pathname === "expenditures",
     },
   ]
 
