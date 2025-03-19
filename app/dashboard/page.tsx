@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { getUsername } from "@/lib/utils"
 
 interface DashboardHeaderProps {
   heading: string;
@@ -36,21 +37,8 @@ interface DashboardHeaderProps {
 
 export default function DashboardPage({ heading, text, showUserName = true }: DashboardHeaderProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
-  const [userName, setUserName] = useState<string | null>(null);
-
-  useEffect(() => {
-    // only run on client side
-    if (typeof window !== 'undefined') {
-      let storedName = localStorage.getItem('userName');
-
-      if (!storedName) {
-        storedName = localStorage.getItem('user')
-      }
-      setUserName(storedName);
-    }
-  }, []);
-
-  console.log(userName, 'this is my username')
+  
+  const userName = getUsername();
 
   return (
     <div className="flex min-h-screen bg-muted/40">
