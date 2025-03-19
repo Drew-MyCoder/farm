@@ -17,7 +17,9 @@ import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { cn, getUserId } from "@/lib/utils"
+import { getCoops } from "@/lib/actions/auth"
+import axios from "axios"
 
 interface Coop {
   id: string
@@ -26,13 +28,20 @@ interface Coop {
 
 interface EggUpdateData {
   coopId: string
-  date: Date
-  eggsCollected: number
-  crates: number
-  remainder: number
-  brokenEggs: number
-  feedConsumed: number
+  collection_date: Date
+  // crates_collected: number
+  remainder_eggs: number
+  broken_eggs: number
   notes: string
+  status: string
+  total_dead_fowls: number
+  total_feed: number
+  total_fowls: number
+  coop_name: string
+  user_id: number
+  crates_collected: number
+  egg_count: number
+  efficiency: number
 }
 
 export default function EggUpdatePage() {
@@ -42,14 +51,28 @@ export default function EggUpdatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<EggUpdateData>({
     coopId: "",
-    date: new Date(),
-    eggsCollected: 0,
-    crates: 0,
-    remainder: 0,
-    brokenEggs: 0,
-    feedConsumed: 0,
+    collection_date: new Date(),
+    egg_count: 0,
+    crates_collected: 0,
+    remainder_eggs: 0,
+    broken_eggs: 0,
+    total_feed: 0,
     notes: "",
+    status: "",
+    total_dead_fowls: 0,
+    total_fowls: 0,
+    coop_name: "",
+    user_id: 0,
+    efficiency: 0,
   })
+  const userId = getUserId();
+
+  // Calculate efficiency (eggs collected vs broken)
+  const calculateEfficiency = (collected: number, broken: number) => {
+    if (collected === 0) return 0
+    return ((collected - broken) / collected) * 100
+  }
+
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -59,12 +82,12 @@ export default function EggUpdatePage() {
         // const response = await fetch("/api/coops")
 
         // For demo purposes, create mock data
-        const mockCoops: Coop[] = [
-          { id: "1", coop_name: "Coop A" },
-          { id: "2", coop_name: "Coop B" },
-          { id: "3", coop_name: "Coop C" },
-          { id: "4", coop_name: "Coop D" },
-        ]
+        setLoading(true);
+        const mockCoops: Coop[] = await getCoops();
+        if(mockCoops) {
+          
+          console.log(mockCoops, ' this is my coops from database')
+        }
 
         // Simulate API call
         setTimeout(() => {
@@ -73,11 +96,14 @@ export default function EggUpdatePage() {
         }, 500)
       } catch (error) {
         console.error("Error fetching coops:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load coops. Please try again.",
-          variant: "destructive",
-        })
+        // toast({
+        //   title: "Error",
+        //   description: "Failed to load coops. Please try again.",
+        //   variant: "destructive",
+        // })
+        toast.error('Failed to load coops. Please try again.', {
+          description: 'Please try again.',
+        });
         setLoading(false)
       }
     }
@@ -92,20 +118,20 @@ export default function EggUpdatePage() {
       newErrors.coopId = "Please select a coop"
     }
 
-    if (!formData.date) {
-      newErrors.date = "Please select a date"
+    if (!formData.collection_date) {
+      newErrors.collection_date = "Please select a collection_date"
     }
 
-    if (formData.eggsCollected < 0) {
-      newErrors.eggsCollected = "Eggs collected cannot be negative"
+    if (formData.egg_count < 0) {
+      newErrors.egg_count = "Eggs collected cannot be negative"
     }
 
-    if (formData.brokenEggs < 0) {
-      newErrors.brokenEggs = "Broken eggs cannot be negative"
+    if (formData.broken_eggs < 0) {
+      newErrors.broken_eggs = "Broken eggs cannot be negative"
     }
 
-    if (formData.feedConsumed < 0) {
-      newErrors.feedConsumed = "Feed consumed cannot be negative"
+    if (formData.total_feed < 0) {
+      newErrors.total_feed = "Feed consumed cannot be negative"
     }
 
     setErrors(newErrors)
@@ -113,6 +139,7 @@ export default function EggUpdatePage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("submitting to backend: ", formData);
     e.preventDefault()
 
     if (!validateForm()) {
@@ -122,44 +149,78 @@ export default function EggUpdatePage() {
     setIsSubmitting(true)
 
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch("/api/eggs/daily", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(formData),
-      // })
+      const response = await axios.post(
+        "http://localhost:8000/coopscoop",
+        {
+          coopId: formData.coopId,
+          collection_date: formData.collection_date,
+          egg_count: formData.egg_count,
+          crates_collected: formData.crates_collected,
+          remainder_eggs: formData.remainder_eggs,
+          broken_eggs: formData.broken_eggs,
+          total_feed: formData.total_feed,
+          notes: formData.notes,
+          status: "active",
+          total_dead_fowls: formData.total_dead_fowls,
+          total_fowls: formData.total_fowls,
+          coop_name: formData.coop_name,
+          user_id: userId,
+          efficiency: calculateEfficiency(formData.egg_count, formData.broken_eggs)
+        },
+        { headers: { "Content-Type": "application/json" }},
+      );
+      // console.log('full api order response', response);
+      
+      const data = await response
+      if (!response) {
+        throw new Error(data.statusText || 'Failed to create order');
+      }
+      if (response.status !== 200) {
+        throw new Error (response.statusText || 'sorry something went wrong. try again');
+      }
+      // setStatus({ type: 'Success', message: 'Order created successfully'});
+      router.push('/dashboard/eggs')
+
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      toast({
-        title: "Success",
-        description: "Egg collection data saved successfully",
-      })
+      // toast({
+      //   title: "Success",
+      //   description: "Egg collection data saved successfully",
+      // })
+      toast.success("Egg collection data saved successfully");
 
       // Reset form after successful submission
       setFormData({
         coopId: "",
-        date: new Date(),
-        eggsCollected: 0,
-        crates: 0,
-        remainder: 0,
-        brokenEggs: 0,
-        feedConsumed: 0,
+        collection_date: new Date(),
+        egg_count: 0,
+        crates_collected: 0,
+        remainder_eggs: 0,
+        broken_eggs: 0,
+        total_feed: 0,
         notes: "",
+        status: "",
+        total_dead_fowls: 0,
+        total_fowls: 0,
+        coop_name: "",
+        user_id: 0,
+        efficiency: 0,
       })
 
       // Optionally redirect to a dashboard or egg records page
       // router.push("/dashboard/eggs")
     } catch (error) {
       console.error("Error saving egg data:", error)
-      toast({
-        title: "Error",
-        description: "Failed to save egg collection data",
-        variant: "destructive",
-      })
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to save egg collection data",
+      //   variant: "destructive",
+      // })
+      toast.error('Failed to load coops. Please try again.', {
+        description: 'Please try again.',
+      });
     } finally {
       setIsSubmitting(false)
     }
@@ -175,7 +236,7 @@ export default function EggUpdatePage() {
       <Card>
         <CardHeader>
           <CardTitle>Egg Collection Form</CardTitle>
-          <CardDescription>Enter the egg collection data for today or a specific date.</CardDescription>
+          <CardDescription>Enter the egg collection data for today or a specific collection_date.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -184,8 +245,17 @@ export default function EggUpdatePage() {
                 <Label htmlFor="coop">Coop</Label>
                 <Select
                   value={formData.coopId}
-                  onValueChange={(value) => {
-                    setFormData({ ...formData, coopId: value })
+                  // onValueChange={(value) => {
+                  //   console.log("Selected coopId, ", value);
+                  //   setFormData({ ...formData, coopId: value })
+                    onValueChange={(value) => {
+                      console.log("Selected coopId, ", value);
+                      const selectedCoop = coops.find((coop) => String(coop.id) === value);
+                      setFormData({
+                        ...formData,
+                        coopId: value,
+                        coop_name: selectedCoop?.coop_name || "",
+                      });
                     if (errors.coopId) {
                       setErrors({ ...errors, coopId: "" })
                     }
@@ -203,7 +273,7 @@ export default function EggUpdatePage() {
                       </div>
                     ) : (
                       coops.map((coop) => (
-                        <SelectItem key={coop.id} value={coop.id}>
+                        <SelectItem key={coop.id} value={String(coop.id)}>
                           {coop.coop_name}
                         </SelectItem>
                       ))
@@ -214,143 +284,143 @@ export default function EggUpdatePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="date">Collection Date</Label>
+                <Label htmlFor="collection_date">Collection Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !formData.date && "text-muted-foreground",
-                        errors.date && "border-red-500",
+                        !formData.collection_date && "text-muted-foreground",
+                        errors.collection_date && "border-red-500",
                       )}
                       disabled={isSubmitting}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.date ? format(formData.date, "PPP") : <span>Pick a date</span>}
+                      {formData.collection_date ? format(formData.collection_date, "PPP") : <span>Pick a collection_date</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={formData.date}
-                      onSelect={(date) => {
-                        setFormData({ ...formData, date: date || new Date() })
-                        if (errors.date) {
-                          setErrors({ ...errors, date: "" })
+                      selected={formData.collection_date}
+                      onSelect={(collection_date) => {
+                        setFormData({ ...formData, collection_date: collection_date || new Date() })
+                        if (errors.collection_date) {
+                          setErrors({ ...errors, collection_date: "" })
                         }
                       }}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
-                {errors.date && <p className="text-sm text-red-500">{errors.date}</p>}
+                {errors.collection_date && <p className="text-sm text-red-500">{errors.collection_date}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="crates">Crates Collected</Label>
+                  <Label htmlFor="crates_collected">Crates Collected</Label>
                   <Input
-                    id="crates"
+                    id="crates_collected"
                     type="number"
                     min="0"
-                    value={formData.crates || 0}
+                    value={formData.crates_collected || 0}
                     onChange={(e) => {
-                      const crates = Number.parseInt(e.target.value) || 0
-                      const remainder = formData.remainder || 0
+                      const crates_collected = Number.parseInt(e.target.value) || 0
+                      const remainder_eggs = formData.remainder_eggs || 0
                       setFormData({
                         ...formData,
-                        crates: crates,
-                        eggsCollected: crates * 30 + remainder,
+                        crates_collected: crates_collected,
+                        egg_count: crates_collected * 30 + remainder_eggs,
                       })
-                      if (errors.crates) {
-                        setErrors({ ...errors, crates: "" })
+                      if (errors.crates_collected) {
+                        setErrors({ ...errors, crates_collected: "" })
                       }
                     }}
-                    className={errors.crates ? "border-red-500" : ""}
+                    className={errors.crates_collected ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
-                  {errors.crates && <p className="text-sm text-red-500">{errors.crates}</p>}
+                  {errors.crates_collected && <p className="text-sm text-red-500">{errors.crates_collected}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="remainder">Remainder Eggs</Label>
+                  <Label htmlFor="remainder_eggs">Remainder Eggs</Label>
                   <Input
-                    id="remainder"
+                    id="remainder_eggs"
                     type="number"
                     min="0"
                     max="29"
-                    value={formData.remainder || 0}
+                    value={formData.remainder_eggs || 0}
                     onChange={(e) => {
-                      const remainder = Number.parseInt(e.target.value) || 0
-                      const crates = formData.crates || 0
+                      const remainder_eggs = Number.parseInt(e.target.value) || 0
+                      const crates_collected = formData.crates_collected || 0
                       setFormData({
                         ...formData,
-                        remainder: remainder,
-                        eggsCollected: crates * 30 + remainder,
+                        remainder_eggs: remainder_eggs,
+                        egg_count: crates_collected * 30 + remainder_eggs,
                       })
-                      if (errors.remainder) {
-                        setErrors({ ...errors, remainder: "" })
+                      if (errors.remainder_eggs) {
+                        setErrors({ ...errors, remainder_eggs: "" })
                       }
                     }}
-                    className={errors.remainder ? "border-red-500" : ""}
+                    className={errors.remainder_eggs ? "border-red-500" : ""}
                     disabled={isSubmitting}
                   />
-                  {errors.remainder && <p className="text-sm text-red-500">{errors.remainder}</p>}
+                  {errors.remainder_eggs && <p className="text-sm text-red-500">{errors.remainder_eggs}</p>}
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="eggsCollected">Total Eggs Collected</Label>
+                  <Label htmlFor="egg_count">Total Eggs Collected</Label>
                   <Input
-                    id="eggsCollected"
+                    id="egg_count"
                     type="number"
                     min="0"
-                    value={formData.eggsCollected}
+                    value={formData.egg_count}
                     readOnly
                     disabled
                     className="bg-muted"
                   />
-                  <p className="text-xs text-muted-foreground">Automatically calculated from crates and remainder</p>
+                  <p className="text-xs text-muted-foreground">Automatically calculated from crates_collected and remainder_eggs</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="brokenEggs">Broken Eggs</Label>
+                <Label htmlFor="broken_eggs">Broken Eggs</Label>
                 <Input
-                  id="brokenEggs"
+                  id="broken_eggs"
                   type="number"
                   min="0"
-                  value={formData.brokenEggs}
+                  value={formData.broken_eggs}
                   onChange={(e) => {
-                    setFormData({ ...formData, brokenEggs: Number.parseInt(e.target.value) || 0 })
-                    if (errors.brokenEggs) {
-                      setErrors({ ...errors, brokenEggs: "" })
+                    setFormData({ ...formData, broken_eggs: Number.parseInt(e.target.value) || 0 })
+                    if (errors.broken_eggs) {
+                      setErrors({ ...errors, broken_eggs: "" })
                     }
                   }}
-                  className={errors.brokenEggs ? "border-red-500" : ""}
+                  className={errors.broken_eggs ? "border-red-500" : ""}
                   disabled={isSubmitting}
                 />
-                {errors.brokenEggs && <p className="text-sm text-red-500">{errors.brokenEggs}</p>}
+                {errors.broken_eggs && <p className="text-sm text-red-500">{errors.broken_eggs}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="feedConsumed">Feed Consumed (kg)</Label>
+                <Label htmlFor="total_feed">Feed Consumed (kg)</Label>
                 <Input
-                  id="feedConsumed"
+                  id="total_feed"
                   type="number"
                   min="0"
                   step="0.1"
-                  value={formData.feedConsumed}
+                  value={formData.total_feed}
                   onChange={(e) => {
-                    setFormData({ ...formData, feedConsumed: Number.parseFloat(e.target.value) || 0 })
-                    if (errors.feedConsumed) {
-                      setErrors({ ...errors, feedConsumed: "" })
+                    setFormData({ ...formData, total_feed: Number.parseFloat(e.target.value) || 0 })
+                    if (errors.total_feed) {
+                      setErrors({ ...errors, total_feed: "" })
                     }
                   }}
-                  className={errors.feedConsumed ? "border-red-500" : ""}
+                  className={errors.total_feed ? "border-red-500" : ""}
                   disabled={isSubmitting}
                 />
-                {errors.feedConsumed && <p className="text-sm text-red-500">{errors.feedConsumed}</p>}
+                {errors.total_feed && <p className="text-sm text-red-500">{errors.total_feed}</p>}
               </div>
 
               <div className="space-y-2 md:col-span-2">
