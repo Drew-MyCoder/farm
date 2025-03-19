@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Calendar, CheckCircle2, Clock, Filter, Plus, Search, Trash2, XCircle, Package } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Calendar, CheckCircle2, Clock, Filter, Plus, Search, Trash2, XCircle, Package, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -24,9 +24,10 @@ import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { format } from "date-fns"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
+import { cn, getUsername } from "@/lib/utils"
 import axios from "axios"
 import { useRouter } from "next/navigation"
+import { getBuyers } from "@/lib/actions/auth"
 
 interface Order {
   id: number
@@ -37,61 +38,25 @@ interface Order {
   status_of_delivery: "pending" | "processing" | "delivered" | "cancelled"
   created_at: string
   updated_at: string
+  by: string
 }
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 1,
-      name: "John Doe",
-      date_of_delivery: "2025-03-15T00:00:00",
-      crates_desired: 50,
-      amount: 4500,
-      status_of_delivery: "pending",
-      created_at: "2025-03-01T10:15:23.475460",
-      updated_at: "2025-03-01T10:15:23.475466",
-    },
-    {
-      id: 2,
-      name: "Kofi",
-      date_of_delivery: "2025-02-19T00:00:00",
-      crates_desired: 100,
-      amount: 9000,
-      status_of_delivery: "pending",
-      created_at: "2025-02-07T08:25:23.475460",
-      updated_at: "2025-02-07T08:25:23.475466",
-    },
-    {
-      id: 3,
-      name: "Sarah Johnson",
-      date_of_delivery: "2025-03-10T00:00:00",
-      crates_desired: 75,
-      amount: 6750,
-      status_of_delivery: "processing",
-      created_at: "2025-03-02T14:30:23.475460",
-      updated_at: "2025-03-05T09:45:23.475466",
-    },
-    {
-      id: 4,
-      name: "Ama Mensah",
-      date_of_delivery: "2025-03-05T00:00:00",
-      crates_desired: 30,
-      amount: 2700,
-      status_of_delivery: "delivered",
-      created_at: "2025-02-28T11:20:23.475460",
-      updated_at: "2025-03-05T16:35:23.475466",
-    },
-    {
-      id: 5,
-      name: "David Chen",
-      date_of_delivery: "2025-03-01T00:00:00",
-      crates_desired: 120,
-      amount: 10800,
-      status_of_delivery: "cancelled",
-      created_at: "2025-02-20T09:10:23.475460",
-      updated_at: "2025-02-25T13:40:23.475466",
-    },
-  ])
+  
+  const [data, setData] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const fetchBuyers = async() => {
+      const response = await getBuyers();
+      if(response && response.success !== false){
+        setData(response);
+        console.log(response, ' this is my response from database')
+      }
+    }; 
+    
+    fetchBuyers();
+  }, [])
+  
 
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -102,12 +67,17 @@ export default function OrdersPage() {
     crates_desired: 0,
     amount: 0,
     status_of_delivery: "pending",
+    by: "",
   })
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: '', message: ''});
   const router = useRouter();
+  const userName = getUsername();
+  console.log('this is the new user name in oder', userName);
+  
+  
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = data.filter((order) => {
     // Search filter
     const matchesSearch =
       order.name.toLowerCase().includes(searchQuery.toLowerCase()) || order.id.toString().includes(searchQuery)
@@ -119,8 +89,8 @@ export default function OrdersPage() {
   })
 
   const handleStatusChange = (orderId: number, newStatus: "pending" | "processing" | "delivered" | "cancelled") => {
-    setOrders(
-      orders.map((order) =>
+    setData(
+      data.map((order) =>
         order.id === orderId
           ? { ...order, status_of_delivery: newStatus, updated_at: new Date().toISOString() }
           : order,
@@ -129,17 +99,17 @@ export default function OrdersPage() {
   }
 
   const handleDeleteOrder = (orderId: number) => {
-    setOrders(orders.filter((order) => order.id !== orderId))
+    setData(data.filter((order) => order.id !== orderId))
   }
 
   const handleCreateOrder = async (e: any) => {
     e.preventDefault();
     setSubmitting(true);
-    const id = Math.max(...orders.map((o) => o.id), 0) + 1
+    const id = Math.max(...data.map((o) => o.id), 0) + 1
     const now = new Date().toISOString()
 
-    setOrders([
-      ...orders,
+    setData([
+      ...data,
       {
         id,
         ...newOrder,
@@ -154,6 +124,7 @@ export default function OrdersPage() {
       crates_desired: 0,
       amount: 0,
       status_of_delivery: "pending",
+      by: "",
     })
     
     try {
@@ -165,10 +136,11 @@ export default function OrdersPage() {
           crates_desired: newOrder.crates_desired,
           amount: newOrder.amount,
           status_of_delivery: newOrder.status_of_delivery,
+          by: userName,
         },
         { headers: { "Content-Type": "application/json" }},
       );
-      console.log('full api order response', response);
+      // console.log('full api order response', response);
       
       const data = await response
       if (!response) {
@@ -247,24 +219,24 @@ export default function OrdersPage() {
   }
 
   const calculateTotalRevenue = () => {
-    return orders
+    return data
       .filter((order) => order.status_of_delivery !== "cancelled")
       .reduce((sum, order) => sum + order.amount, 0)
   }
 
   const calculatePendingOrders = () => {
-    return orders.filter((order) => order.status_of_delivery === "pending").length
+    return data.filter((order) => order.status_of_delivery === "pending").length
   }
 
   const calculateTotalCrates = () => {
-    return orders
+    return data
       .filter((order) => order.status_of_delivery !== "cancelled")
       .reduce((sum, order) => sum + order.crates_desired, 0)
   }
 
   return (
     <DashboardShell>
-      <DashboardHeader heading="Orders" text="Manage customer orders and track deliveries.">
+      <DashboardHeader heading="Orders" text="Manage customer data and track deliveries.">
         <Dialog open={isNewOrderDialogOpen} onOpenChange={setIsNewOrderDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -333,7 +305,7 @@ export default function OrdersPage() {
                       setNewOrder({
                         ...newOrder,
                         crates_desired: crates,
-                        amount: crates * 90, // Assuming 90 per crate
+                        amount: crates * 55, // Assuming 55 per crate
                       })
                     }}
                     placeholder="Number of crates"
@@ -386,14 +358,14 @@ export default function OrdersPage() {
             <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
               <div>
                 <CardTitle>Order List</CardTitle>
-                <CardDescription>Manage and track customer orders</CardDescription>
+                <CardDescription>Manage and track customer data</CardDescription>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search orders..."
+                    placeholder="Search data..."
                     className="pl-8"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -429,13 +401,14 @@ export default function OrdersPage() {
                     <div className="rounded-full bg-muted p-3">
                       <Package className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold">No orders found</h3>
+                    <h3 className="mt-4 text-lg font-semibold">No data found</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Try adjusting your search or filters to find what you're looking for.
                     </p>
                   </div>
                 ) : (
                   filteredOrders.map((order) => (
+                    
                     <div key={order.id} className="flex items-start gap-4 rounded-lg border p-4">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
                         {getStatusIcon(order.status_of_delivery)}
@@ -461,6 +434,11 @@ export default function OrdersPage() {
                             <Clock className="mr-1 h-3 w-3" />
                             Created: {format(new Date(order.created_at), "MMM d, yyyy")}
                           </div>
+                          <div className="flex items-center">
+                            <User className="mr-1 h-3 w-3" />
+                            By: {order.by ? order.by: "Unknown"}
+                            
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -478,7 +456,7 @@ export default function OrdersPage() {
                             <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-500"
@@ -486,11 +464,12 @@ export default function OrdersPage() {
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
-                        </Button>
+                        </Button> */}
                       </div>
                     </div>
                   ))
                 )}
+                
               </TabsContent>
               <TabsContent value="pending" className="mt-4 space-y-4">
                 {filteredOrders.filter((o) => o.status_of_delivery === "pending").length === 0 ? (
@@ -498,8 +477,8 @@ export default function OrdersPage() {
                     <div className="rounded-full bg-muted p-3">
                       <Package className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold">No pending orders</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">All orders have been processed or delivered.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No pending data</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">All data have been processed or delivered.</p>
                   </div>
                 ) : (
                   filteredOrders
@@ -567,8 +546,8 @@ export default function OrdersPage() {
                     <div className="rounded-full bg-muted p-3">
                       <Package className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold">No orders in processing</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">No orders are currently being processed.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No data in processing</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">No data are currently being processed.</p>
                   </div>
                 ) : (
                   filteredOrders
@@ -637,8 +616,8 @@ export default function OrdersPage() {
                     <div className="rounded-full bg-muted p-3">
                       <Package className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold">No delivered orders</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">No orders have been delivered yet.</p>
+                    <h3 className="mt-4 text-lg font-semibold">No delivered data</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">No data have been delivered yet.</p>
                   </div>
                 ) : (
                   filteredOrders
@@ -723,25 +702,25 @@ export default function OrdersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col items-center justify-center rounded-lg border p-3">
                   <div className="text-2xl font-bold">
-                    {orders.filter((o) => o.status_of_delivery === "pending").length}
+                    {data.filter((o) => o.status_of_delivery === "pending").length}
                   </div>
                   <div className="text-xs text-muted-foreground">Pending</div>
                 </div>
                 <div className="flex flex-col items-center justify-center rounded-lg border p-3">
                   <div className="text-2xl font-bold">
-                    {orders.filter((o) => o.status_of_delivery === "processing").length}
+                    {data.filter((o) => o.status_of_delivery === "processing").length}
                   </div>
                   <div className="text-xs text-muted-foreground">Processing</div>
                 </div>
                 <div className="flex flex-col items-center justify-center rounded-lg border p-3">
                   <div className="text-2xl font-bold">
-                    {orders.filter((o) => o.status_of_delivery === "delivered").length}
+                    {data.filter((o) => o.status_of_delivery === "delivered").length}
                   </div>
                   <div className="text-xs text-muted-foreground">Delivered</div>
                 </div>
                 <div className="flex flex-col items-center justify-center rounded-lg border p-3">
                   <div className="text-2xl font-bold">
-                    {orders.filter((o) => o.status_of_delivery === "cancelled").length}
+                    {data.filter((o) => o.status_of_delivery === "cancelled").length}
                   </div>
                   <div className="text-xs text-muted-foreground">Cancelled</div>
                 </div>
@@ -751,7 +730,7 @@ export default function OrdersPage() {
             <div className="space-y-4">
               <h4 className="text-sm font-medium">Upcoming Deliveries</h4>
               <div className="space-y-2">
-                {orders
+                {data
                   .filter((o) => o.status_of_delivery !== "delivered" && o.status_of_delivery !== "cancelled")
                   .sort((a, b) => new Date(a.date_of_delivery).getTime() - new Date(b.date_of_delivery).getTime())
                   .slice(0, 3)
