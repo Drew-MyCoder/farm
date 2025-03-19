@@ -55,7 +55,7 @@ export const signUp = async (params: AuthCredentials) => {
     try {
         const response = await axios.post(
             "http://localhost:8000/api/v1/auth/register",
-            { email, username, password, status: 'active', role: 'admin' },
+            { email, username, password, status: 'active', role: 'feeder' },
             { headers: { "Content-Type": "application/json"}},
             
         );
@@ -86,4 +86,52 @@ export const signUp = async (params: AuthCredentials) => {
     };
 }
 
+
+
+export const getBuyers = async () => {
+    try {
+        const response = await axios.get(
+            "http://localhost:8000/buyers",
+            { headers: { "Content-Type": "application/json"}},         
+        );
+        if (!response){
+            return {message: "Sorry, unable to fetch buyers"};
+        }
+        if (response?.status != 200) {
+            return { success: false, error: response.statusText}
+        }
+        return response.data
+        // console.log(response)
+
+    } catch (error) {
+        console.log(error);
+        if (error instanceof Error) {
+          return { success: false, error: error.message };
+        }
+        return { success: false, error: String(error) };
+      }
+}
+
+
+export const getCoops = async () => {
+    try {
+        const response = await axios.get(
+            "http://localhost:8000/coops",
+            { headers: { "Content-Type": "application/json"}},         
+        );
+        if (!response){
+            return {message: "Sorry, unable to fetch coops"};
+        }
+        if (response?.status != 200) {
+            return { success: false, error: response.statusText}
+        }
+        return response.data
+    } catch (error) {
+        console.log(error);
+        if (error instanceof Error) {
+          return { success: false, error: error.message };
+        }
+        return { success: false, error: String(error) };
+      }
+}
 
