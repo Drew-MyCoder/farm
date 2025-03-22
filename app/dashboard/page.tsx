@@ -19,6 +19,7 @@ import {
   DollarSign,
   ShieldCheck,
   Syringe,
+  User,
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -27,6 +28,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { getUsername } from "@/lib/utils"
+import { getBuyers, getCoops } from "@/lib/actions/auth"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { format } from "date-fns"
 
 interface DashboardHeaderProps {
   heading: string;
@@ -34,11 +41,142 @@ interface DashboardHeaderProps {
   showUserName?: boolean;
 }
 
+interface EggRecord {
+  id: string
+  coopId: string
+  coop_name: string
+  collection_date: string
+  egg_count: number
+  broken_eggs: number
+  total_feed: number
+  notes: string
+  
+}
+
+interface OrderData {
+  id: number
+  name: string
+  date_of_delivery: string
+  crates_desired: number
+  amount: number
+  status_of_delivery: "pending" | "processing" | "delivered" | "cancelled"
+  created_at: string
+  updated_at: string
+  by: string
+}
+
 
 export default function DashboardPage({ heading, text, showUserName = true }: DashboardHeaderProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
-  
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<EggRecord[]>([]); 
+  const [error, setError] = useState("")
+  const [eggRecords, setEggRecords] = useState<EggRecord[]>([])
   const userName = getUsername();
+  const [orderData, setOrderData] = useState<OrderData[]>([]);
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+
+  useEffect(() => {
+    async function fetchEggRecords() {
+      try {
+        setLoading(true)
+        const mockEggRecords: EggRecord[] = await getCoops();
+            if(mockEggRecords) {
+            setData(mockEggRecords);
+            console.log(mockEggRecords, ' this is my response from database')
+          }
+         
+
+        // Simulate API call
+        setTimeout(() => {
+          setEggRecords(mockEggRecords)
+          setLoading(false)
+        }, 1000)
+      } catch (err) {
+        console.error("Error fetching egg records:", err)
+        setError("Failed to load egg collection records. Please try again.")
+        setLoading(false)
+      }
+    }
+
+    fetchEggRecords()
+  }, [])
+
+  useEffect(() => {
+    const fetchBuyers = async() => {
+      const response = await getBuyers();
+      if(response && response.success !== false){
+        setOrderData(response);
+        console.log(response, ' this is my buyers response from database')
+      }
+    }; 
+    
+    fetchBuyers();
+  }, [])
+
+  const calculatePendingOrders = () => {
+    return orderData.filter((order) => order.status_of_delivery === "pending").length
+  }
+
+  const filteredOrders = orderData.filter((order) => {
+    // Search filter
+    const matchesSearch =
+    order.name.toLowerCase().includes(searchQuery.toLowerCase()) || order.id.toString().includes(searchQuery)
+
+    // Status filter
+    const matchesStatus = statusFilter === "all"  
+
+    return matchesSearch && matchesStatus
+  })
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500/10 text-yellow-500"
+      case "processing":
+        return "bg-blue-500/10 text-blue-500"
+      case "delivered":
+        return "bg-green-500/10 text-green-500"
+      case "cancelled":
+        return "bg-red-500/10 text-red-500"
+      default:
+        return "bg-gray-500/10 text-gray-500"
+    }
+  }
+
+  // const getStatusIcon = (status: string) => {
+  //   switch (status) {
+  //     case "delivered":
+  //       return <CheckCircle2 className="h-5 w-5 text-green-500" />
+  //     case "processing":
+  //       return <Clock className="h-5 w-5 text-blue-500" />
+  //     case "cancelled":
+  //       return <XCircle className="h-5 w-5 text-red-500" />
+  //     default:
+  //       return <Clock className="h-5 w-5 text-yellow-500" />
+  //   }
+  // }
+
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return { bg: "bg-yellow-500/10", icon: <Clock className="h-5 w-5 text-yellow-500" />, text: "text-yellow-500" };
+      case "processing":
+        return { bg: "bg-blue-500/10", icon: <Clock className="h-5 w-5 text-blue-500" />, text: "text-blue-500" };
+      case "delivered":
+        return { bg: "bg-green-500/10", icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, text: "text-green-500" };
+      case "cancelled":
+        return { bg: "bg-red-500/10", icon: <XCircle className="h-5 w-5 text-red-500" />, text: "text-red-500" };
+      default:
+        return { bg: "bg-gray-500/10", icon: <Clock className="h-5 w-5 text-gray-500" />, text: "text-gray-500" };
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return format(date, "MMM d, yyyy")
+  }
 
   return (
     <div className="flex min-h-screen bg-muted/40">
@@ -218,7 +356,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
         </header>
         <main className="flex-1 p-4 md:p-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            {/* <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Eggs Today</CardTitle>
                 <Egg className="h-4 w-4 text-muted-foreground" />
@@ -230,15 +368,42 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                   <Progress value={80} className="h-2" />
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
+            <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Eggs Today</CardTitle>
+            <Egg className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {loading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                eggRecords
+                  .filter((record) => new Date(record.collection_date).toDateString() === new Date().toDateString())
+                  .reduce((sum, record) => sum + record.egg_count, 0)
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Across all coops</p>
+            <p className="text-xs text-muted-foreground">+15 from yesterday</p>
+                <div className="mt-4">
+                  <Progress value={80} className="h-2" />
+                </div>
+          </CardContent>
+        </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">2</div>
-                <p className="text-xs text-muted-foreground">Awaiting processing</p>
+              <div className="flex flex-col items-center justify-center rounded-lg border p-3 mb-1">
+                  <div className="text-2xl font-bold">
+                    {orderData.filter((o) => o.status_of_delivery === "pending").length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Pending</div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">Awaiting processing</p>
                 <div className="mt-4">
                   <Progress value={40} className="h-2" />
                 </div>
@@ -272,76 +437,30 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
             </Card>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-4">
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Latest customer orders and their status</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-500/10">
-                      <Clock className="h-5 w-5 text-yellow-500" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">Order #2 - Kofi</p>
-                      <p className="text-sm text-muted-foreground">100 crates - ₵9,000 - Due Feb 19, 2025</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Process
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-yellow-500/10">
-                      <Clock className="h-5 w-5 text-yellow-500" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">Order #1 - John Doe</p>
-                      <p className="text-sm text-muted-foreground">50 crates - ₵4,500 - Due Mar 15, 2025</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Process
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/10">
-                      <Clock className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">Order #3 - Sarah Johnson</p>
-                      <p className="text-sm text-muted-foreground">75 crates - ₵6,750 - Due Mar 10, 2025</p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-blue-500">
-                      Processing
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-500/10">
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">Order #4 - Ama Mensah</p>
-                      <p className="text-sm text-muted-foreground">30 crates - ₵2,700 - Delivered Mar 5, 2025</p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-green-500">
-                      Delivered
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/10">
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">Order #5 - David Chen</p>
-                      <p className="text-sm text-muted-foreground">120 crates - ₵10,800 - Cancelled</p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-red-500">
-                      Cancelled
-                    </Button>
-                  </div>
+<Card defaultValue="all" className="lg:col-span-4">
+      <CardHeader>
+        <CardTitle>Recent Orders</CardTitle>
+        <CardDescription>Latest customer orders and their status</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {filteredOrders.map((order, index) => {
+            const { bg, icon, text } = getStatusStyle(order.status_of_delivery);
+            return (
+              <div key={order.id} className="flex items-center gap-4">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${bg}`}>{icon}</div>
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-medium leading-none">Order #{index + 1} - {order.name}</p>
+                  <p className="text-sm text-muted-foreground">{order.crates_desired} crates - ₵{order.amount} - Due {new Date(order.date_of_delivery).toDateString()}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Button variant="ghost" size="sm" className={text}>{order.status_of_delivery}</Button>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+
             <Card className="lg:col-span-3">
               <CardHeader>
                 <CardTitle>Upcoming Vaccinations</CardTitle>
@@ -420,17 +539,17 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                 <div className="space-y-2">
                   <div className="flex items-center">
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium">New Order System</h3>
+                      <h3 className="text-sm font-medium">New OrderData System</h3>
                     </div>
                     <div className="text-xs text-muted-foreground">5 days ago</div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    We've updated our order management system. You can now track orders more efficiently.
+                    We've updated our OrderData management system. You can now track OrderDatas more efficiently.
                   </p>
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Coop Performance</CardTitle>
                 <CardDescription>Egg production by coop</CardDescription>
@@ -470,7 +589,35 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                   </Link>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
+
+          <Card>
+                <CardHeader>
+                  <CardTitle>Coop Performance</CardTitle>
+                  <CardDescription>Egg production by coop</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {data.map((coop) => {
+                    // Set progress dynamically based on egg count
+                    const progress = coop.egg_count > 0 ? Math.min((coop.egg_count / 3000) * 100, 100) : 0; 
+
+                    return (
+                      <div key={coop.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium">{coop.coop_name}</div>
+                          <div className="text-sm font-medium">{coop.egg_count} eggs</div>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                      </div>
+                    );
+                  })}
+                  <div className="pt-4">
+                    <Link href="/dashboard/eggs">
+                      <Button className="w-full">View Detailed Report</Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
           </div>
         </main>
       </div>
