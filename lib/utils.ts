@@ -39,12 +39,12 @@ export function getUserId() {
   useEffect(() => {
     // only run on client side
     if (typeof window !== 'undefined') {
-      let storedName = localStorage.getItem('userId');
+      let storedId = localStorage.getItem('userId');
 
-      if (!storedName) {
-        storedName = localStorage.getItem('user_id')
+      if (!storedId) {
+        storedId = localStorage.getItem('user_id')
       }
-      setUserId(storedName);
+      setUserId(storedId);
     }
   }, []);
 
