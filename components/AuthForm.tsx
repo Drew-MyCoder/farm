@@ -45,25 +45,26 @@ const AuthForm = <T extends FieldValues>({
     });
 
     const handleSubmit: SubmitHandler<T> = async (data) => {
+    try {
         const result = await onSubmit(data);
         console.log(data)
-
-        if(result.success) {
-            toast({
-                title: 'Success',
-                description: isSignIn ?
-                'You have successfully signed in'
-                : 'You have successfully signed up',
-            });
-
-            router.push('/');
+        // If we get here and have a result (no redirect happened)
+        if (result) {
+            if(result.success) {
+                toast.success(isSignIn ? 'You have successfully signed in' : 'You have successfully signed up');
+                
+                // Only redirect if the server didn't already do it
+                router.push('/otp');
         } else {
-            toast({
-                title: `Error ${isSignIn ? 'signing in' : 'Signing up'}`,
-                description: result.error ?? 'An error has occurred',
-                variant: 'destructive',
-            });
+            toast.error(result.error ?? `Error ${isSignIn ? 'signing in' : 'signing up'}`);
         }
+    }
+    } catch (error) {
+        // Handle any errors that aren't redirects
+        console.error('Form submission error:', error);
+        
+        toast.error('An unexpected error occurred');
+    }
     };
 
     return (
