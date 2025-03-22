@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import {
   Bell,
-  Calendar,
   CheckCircle2,
   Clock,
   Egg,
@@ -11,15 +10,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  MessageSquare,
   Settings,
   Users,
   XCircle,
   Package,
-  DollarSign,
-  ShieldCheck,
   Syringe,
-  User,
+
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -30,9 +26,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { getUsername } from "@/lib/utils"
 import { getBuyers, getCoops } from "@/lib/actions/auth"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format } from "date-fns"
 
 interface DashboardHeaderProps {
@@ -144,19 +137,6 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
         return "bg-gray-500/10 text-gray-500"
     }
   }
-
-  // const getStatusIcon = (status: string) => {
-  //   switch (status) {
-  //     case "delivered":
-  //       return <CheckCircle2 className="h-5 w-5 text-green-500" />
-  //     case "processing":
-  //       return <Clock className="h-5 w-5 text-blue-500" />
-  //     case "cancelled":
-  //       return <XCircle className="h-5 w-5 text-red-500" />
-  //     default:
-  //       return <Clock className="h-5 w-5 text-yellow-500" />
-  //   }
-  // }
 
   const getStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
@@ -549,47 +529,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                 </div>
               </CardContent>
             </Card>
-            {/* <Card>
-              <CardHeader>
-                <CardTitle>Coop Performance</CardTitle>
-                <CardDescription>Egg production by coop</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">Coop A</div>
-                    <div className="text-sm font-medium">120 eggs</div>
-                  </div>
-                  <Progress value={92} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">Coop B</div>
-                    <div className="text-sm font-medium">95 eggs</div>
-                  </div>
-                  <Progress value={73} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">Coop C</div>
-                    <div className="text-sm font-medium">150 eggs</div>
-                  </div>
-                  <Progress value={100} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">Coop D</div>
-                    <div className="text-sm font-medium">100 eggs</div>
-                  </div>
-                  <Progress value={77} className="h-2" />
-                </div>
-                <div className="pt-4">
-                  <Link href="/dashboard/eggs">
-                    <Button className="w-full">View Detailed Report</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card> */}
+            
 
           <Card>
                 <CardHeader>
