@@ -175,7 +175,7 @@ export default function OrdersPage() {
       console.log(error)
       setStatus({ 
         type: 'error', 
-        message: error.message || 'Failed to create order. Please try again.' 
+        message: status.message || 'Failed to create order. Please try again.' 
       });
     } finally {
       setSubmitting(false);
