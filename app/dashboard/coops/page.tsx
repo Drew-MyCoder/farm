@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { getCoops } from "@/lib/actions/auth"
 
 interface Coop {
   id: string
@@ -45,36 +46,10 @@ export default function CoopsPage() {
         // const response = await fetch("/api/coops")
 
         // For demo purposes, create mock data
-        const mockCoops: Coop[] = [
-          {
-            id: "1",
-            total_fowls: 120,
-            total_dead_fowls: 3,
-            total_feed: 45.5,
-            coop_name: "Coop A",
-          },
-          {
-            id: "2",
-            total_fowls: 85,
-            total_dead_fowls: 1,
-            total_feed: 32.0,
-            coop_name: "Coop B",
-          },
-          {
-            id: "3",
-            total_fowls: 150,
-            total_dead_fowls: 5,
-            total_feed: 60.2,
-            coop_name: "Coop C",
-          },
-          {
-            id: "4",
-            total_fowls: 95,
-            total_dead_fowls: 2,
-            total_feed: 38.7,
-            coop_name: "Coop D",
-          },
-        ]
+        const mockCoops: Coop[] = await getCoops();
+        if (mockCoops) {
+          setCoops(mockCoops);
+        }
 
         // Simulate API call
         setTimeout(() => {
@@ -104,17 +79,13 @@ export default function CoopsPage() {
       // Update local state
       setCoops(coops.filter((coop) => coop.id !== id))
 
-      toast({
-        title: "Success",
-        description: "Coop deleted successfully",
-      })
+      toast.success("Coop deleted successfully");
     } catch (error) {
       console.error("Error deleting coop:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete coop",
-        variant: "destructive",
-      })
+
+      toast.error('Failed to delete coop. Please try again.', {
+        description: 'Please try again.',
+      });
     } finally {
       setCoopToDelete(null)
     }
