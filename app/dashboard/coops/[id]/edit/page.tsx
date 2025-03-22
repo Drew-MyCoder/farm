@@ -10,10 +10,19 @@ import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { UpdateCoopForm } from "@/app/dashboard/coops/components/update-coop-form"
 
+
+interface Coop {
+  id: string
+  total_fowls: number
+  total_dead_fowls: number
+  total_feed: number
+  coop_name: string
+}
+
 export default function EditCoopPage() {
   const params = useParams()
   const router = useRouter()
-  const [coop, setCoop] = useState(null)
+  const [coop, setCoop] = useState<Coop | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
