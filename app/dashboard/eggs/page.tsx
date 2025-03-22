@@ -30,7 +30,7 @@ export default function EggsPage() {
   const [eggRecords, setEggRecords] = useState<EggRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [data, setData] = useState<EggRecord[]>([]);
+  const [data, setData] = useState<EggRecord[]>([]); 
 
 
   useEffect(() => {
