@@ -3,7 +3,7 @@
 
 import axios from 'axios';
 import { redirect } from "next/navigation";
-import { setCookie } from 'cookies-next';
+import { cookies } from 'next/headers';
 
 
 export const signInWithCredentials = async (params: Pick<AuthCredentials,
@@ -27,24 +27,57 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials,
                 return { success: false, error: response.statusText}
 
             }
-            const { access_token } = response.data;
-
-            setCookie("token", access_token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 60 * 24, //1 day
-                path: '/',
-            });
-            console.log('api response data ', response.data)
-            // console.log('token stored in cookies: ', access_token)
-            // redirect(`/otp?user=${encodeURIComponent(response.data.user)}&message=${encodeURIComponent(response.data.message)}&email=${encodeURIComponent(response.data.email)}`)
-            redirect('/otp');
-
-            return response.data; 
+            const cookiesStore = await cookies();
+            // Check if OTP is required (API sends OTP data)
+                if (response.data?.message?.includes('verification') || 
+                response.data?.message?.includes('OTP')) {
             
-        } catch (error) {
+            // Store OTP data in cookies to be read by the OTP page
+            
+             cookiesStore.set('otpData', JSON.stringify({
+                user: response.data.user,
+                message: response.data.message,
+                email: response.data.email
+            }), { maxAge: 600 }); // 10 minutes expiry
+            
+            // Redirect to OTP page
+            console.log("redirecting to otp...");
+            return { success: true, redirect: '/otp'};
+            }
+
+            // If there's no OTP required, handle normal login success
+    // Store token in cookies
+
+    if (response.data?.access_token) {
+         cookiesStore.set('token', response.data.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24, // 1 day
+          path: '/',
+        });
+        
+        // Redirect based on user role
+        // if (response.data.roles === 'admin') {
+        //   return redirect('/admin');
+        // } else if (response.data.roles === 'feeder') {
+        //   return redirect('/dashboard');
+        // } else {
+        //   return redirect('/');
+        // }
+
+        return { success: true, 
+            redirectUrl: response.data.roles === 'admin' ? '/admin' : '/dashboard' };
+      }
+  
+      return response.data
+
+            
+        } catch (error: any) {
             console.error('Login failed', error)
-            throw error;
+            // throw error;
+            return { 
+                error: error.response?.data?.message || 'Login failed. Please try again.' 
+              };
         };
 }
 
@@ -125,7 +158,17 @@ export const getCoops = async () => {
         if (response?.status != 200) {
             return { success: false, error: response.statusText}
         }
-        return response.data
+
+        // const data =  response.data;
+
+        // // ensure uniqueness based on coop name
+        // const uniqueCoops = Array.isArray(data)
+        // ? [ ...new Map(data.map(coop => [coop.coop_name, coop])).values()]
+        // : [];
+
+        // return uniqueCoops;
+
+        return response.data;
     } catch (error) {
         console.log(error);
         if (error instanceof Error) {
