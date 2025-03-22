@@ -91,10 +91,11 @@ export function UpdateCoopForm({ coopId, initialData, onSuccess }: UpdateCoopFor
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      toast({
-        title: "Success",
-        description: "Coop updated successfully",
-      })
+      // toast({
+      //   title: "Success",
+      //   description: "Coop updated successfully",
+      // })
+      toast.success("Coop updated successfully");
 
       if (onSuccess) {
         onSuccess()
@@ -103,11 +104,14 @@ export function UpdateCoopForm({ coopId, initialData, onSuccess }: UpdateCoopFor
       }
     } catch (error) {
       console.error("Error updating coop:", error)
-      toast({
-        title: "Error",
+      // toast({
+      //   title: "Error",
+      //   description: error instanceof Error ? error.message : "Failed to update coop",
+      //   variant: "destructive",
+      // })
+      toast.error('Failed to update coops. Please try again.', {
         description: error instanceof Error ? error.message : "Failed to update coop",
-        variant: "destructive",
-      })
+      });
     } finally {
       setIsSubmitting(false)
     }
