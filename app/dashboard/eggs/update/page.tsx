@@ -67,6 +67,10 @@ export default function EggUpdatePage() {
   })
   const userId = getUserId();
 
+ 
+
+
+
   // Calculate efficiency (eggs collected vs broken)
   const calculateEfficiency = (collected: number, broken: number) => {
     if (collected === 0) return 0
@@ -78,10 +82,7 @@ export default function EggUpdatePage() {
   useEffect(() => {
     async function fetchCoops() {
       try {
-        // In a real app, this would be an API call
-        // const response = await fetch("/api/coops")
 
-        // For demo purposes, create mock data
         setLoading(true);
         const mockCoops: Coop[] = await getCoops();
         if(mockCoops) {
@@ -96,11 +97,7 @@ export default function EggUpdatePage() {
         }, 500)
       } catch (error) {
         console.error("Error fetching coops:", error)
-        // toast({
-        //   title: "Error",
-        //   description: "Failed to load coops. Please try again.",
-        //   variant: "destructive",
-        // })
+
         toast.error('Failed to load coops. Please try again.', {
           description: 'Please try again.',
         });
@@ -149,8 +146,9 @@ export default function EggUpdatePage() {
     setIsSubmitting(true)
 
     try {
-      const response = await axios.post(
-        "http://localhost:8000/coopscoop",
+      const response = await axios.patch(
+        
+        `http://localhost:8000/coops/${formData.coopId}`,
         {
           coopId: formData.coopId,
           collection_date: formData.collection_date,
@@ -170,6 +168,7 @@ export default function EggUpdatePage() {
         { headers: { "Content-Type": "application/json" }},
       );
       // console.log('full api order response', response);
+      // console.log("Submittin to coop id:", coopId)
       
       const data = await response
       if (!response) {
@@ -185,11 +184,8 @@ export default function EggUpdatePage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // toast({
-      //   title: "Success",
-      //   description: "Egg collection data saved successfully",
-      // })
       toast.success("Egg collection data saved successfully");
+
 
       // Reset form after successful submission
       setFormData({
@@ -213,12 +209,8 @@ export default function EggUpdatePage() {
       // router.push("/dashboard/eggs")
     } catch (error) {
       console.error("Error saving egg data:", error)
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to save egg collection data",
-      //   variant: "destructive",
-      // })
-      toast.error('Failed to load coops. Please try again.', {
+
+      toast.error('Failed to load update. Please try again.', {
         description: 'Please try again.',
       });
     } finally {
@@ -245,9 +237,6 @@ export default function EggUpdatePage() {
                 <Label htmlFor="coop">Coop</Label>
                 <Select
                   value={formData.coopId}
-                  // onValueChange={(value) => {
-                  //   console.log("Selected coopId, ", value);
-                  //   setFormData({ ...formData, coopId: value })
                     onValueChange={(value) => {
                       console.log("Selected coopId, ", value);
                       const selectedCoop = coops.find((coop) => String(coop.id) === value);
