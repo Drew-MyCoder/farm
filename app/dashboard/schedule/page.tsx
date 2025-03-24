@@ -47,6 +47,19 @@ import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { cn } from "@/lib/utils"
 
+interface Vaccination {
+  id: number;
+  vaccine_name: string;
+  coop_id: string;
+  coop_name: string;
+  scheduled_date: string;
+  status: "scheduled" | "administered" | "cancelled" | "completed"; // Add other possible statuses
+  notes: string;
+  administered_by: string | null;
+  created_at: string;
+}
+
+
 // Mock data for vaccinations
 const initialVaccinations = [
   {
@@ -157,7 +170,7 @@ export default function VaccinationSchedulePage() {
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [isAddVaccinationDialogOpen, setIsAddVaccinationDialogOpen] = useState(false)
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false)
-  const [selectedVaccination, setSelectedVaccination] = useState<any>(null)
+  const [selectedVaccination, setSelectedVaccination] = useState<Vaccination | null>(null);
   const [newVaccination, setNewVaccination] = useState({
     vaccine_name: "",
     coop_id: "",
@@ -230,9 +243,9 @@ export default function VaccinationSchedulePage() {
     setVaccinations(vaccinations.filter((vaccination) => vaccination.id !== id))
   }
 
-  const viewVaccinationDetails = (vaccination: any) => {
-    setSelectedVaccination(vaccination)
-    setIsViewDetailsDialogOpen(true)
+  const viewVaccinationDetails = (vaccination: Vaccination) => {
+    setSelectedVaccination(vaccination);
+    setIsViewDetailsDialogOpen(true);
   }
 
   const getStatusBadge = (status: string) => {
@@ -455,7 +468,7 @@ export default function VaccinationSchedulePage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Today's Vaccinations</CardTitle>
+            <CardTitle className="text-sm font-medium">Today&apos;s Vaccinations</CardTitle>
             <CardDescription>Scheduled for today</CardDescription>
           </CardHeader>
           <CardContent>
@@ -555,7 +568,7 @@ export default function VaccinationSchedulePage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => viewVaccinationDetails(vaccination)}>
+                              <DropdownMenuItem onClick={() => viewVaccinationDetails(vaccination as Vaccination)}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
@@ -634,7 +647,7 @@ export default function VaccinationSchedulePage() {
                           </TableCell>
                           <TableCell className="max-w-[200px] truncate">{vaccination.notes || "—"}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="outline" size="sm" onClick={() => viewVaccinationDetails(vaccination)}>
+                            <Button variant="outline" size="sm" onClick={() => viewVaccinationDetails(vaccination as Vaccination)}>
                               View
                             </Button>
                           </TableCell>
@@ -681,7 +694,7 @@ export default function VaccinationSchedulePage() {
                           <TableCell>{format(new Date(vaccination.scheduled_date), "MMM d, yyyy")}</TableCell>
                           <TableCell>{vaccination.administered_by}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="outline" size="sm" onClick={() => viewVaccinationDetails(vaccination)}>
+                            <Button variant="outline" size="sm" onClick={() => viewVaccinationDetails(vaccination as Vaccination)}>
                               View
                             </Button>
                           </TableCell>
@@ -840,7 +853,7 @@ export default function VaccinationSchedulePage() {
                           {format(new Date(vaccination.scheduled_date), "h:mm a")}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => viewVaccinationDetails(vaccination)}>
+                      <Button variant="outline" size="sm" onClick={() => viewVaccinationDetails(vaccination as Vaccination)}>
                         View
                       </Button>
                     </div>
