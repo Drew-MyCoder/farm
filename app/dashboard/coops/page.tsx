@@ -42,24 +42,25 @@ export default function CoopsPage() {
     async function fetchCoops() {
       try {
         setLoading(true)
-        // In a real app, this would be an API call
-        // const response = await fetch("/api/coops")
 
-        // For demo purposes, create mock data
-        const mockCoops: Coop[] = await getCoops();
-        if (mockCoops) {
-          setCoops(mockCoops);
-        }
+        const response = await getCoops();
 
+        // Ensure response is an array, default to an empty array if not
+        const mockCoops: Coop[] = Array.isArray(response) ? response : [];
+  
+        setCoops(mockCoops);
+  
         // Simulate API call
         setTimeout(() => {
-          setCoops(mockCoops)
-          setLoading(false)
-        }, 1000)
+          setCoops(mockCoops);
+          setLoading(false);
+        }, 1000);
+        
       } catch (err) {
-        console.error("Error fetching coops:", err)
-        setError("Failed to load coops. Please try again.")
-        setLoading(false)
+        console.error("Error fetching coops:", err);
+        setError("Failed to load coops. Please try again.");
+        setCoops([]); // Ensure it's an empty array on error
+        setLoading(false);
       }
     }
 
@@ -177,7 +178,7 @@ export default function CoopsPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will permanently delete the coop "{coop.coop_name}". This action cannot be
+                                  This will permanently delete the coop &quot{coop.coop_name}&quot. This action cannot be
                                   undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
