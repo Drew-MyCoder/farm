@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export default function HomePage() {
   return (
@@ -36,7 +37,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                <img
+                <Image
                   src="/placeholder.svg?height=400&width=400"
                   alt="Dashboard Preview"
                   className="rounded-lg object-cover"
