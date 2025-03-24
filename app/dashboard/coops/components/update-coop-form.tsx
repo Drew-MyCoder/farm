@@ -23,7 +23,8 @@ interface UpdateCoopFormProps {
 }
 
 export function UpdateCoopForm({ coopId, initialData, onSuccess }: UpdateCoopFormProps) {
-  const router = useRouter()
+  const router = useRouter();
+  console.log(coopId);
   const [formData, setFormData] = useState<CoopData>({
     total_fowls: initialData.total_fowls || 0,
     total_dead_fowls: initialData.total_dead_fowls || 0,
