@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
   Bell,
   CheckCircle2,
@@ -23,16 +23,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { getUsername } from "@/lib/utils"
+import { GetUsername } from "@/lib/utils"
 import { getBuyers, getCoops } from "@/lib/actions/auth"
 import { Skeleton } from "@/components/ui/skeleton"
-import { format } from "date-fns"
+// import { format } from "date-fns"
 
-interface DashboardHeaderProps {
-  heading: string;
-  text?: string;
-  showUserName?: boolean;
-}
+
 
 interface EggRecord {
   id: string
@@ -59,16 +55,18 @@ interface OrderData {
 }
 
 
-export default function DashboardPage({ heading, text, showUserName = true }: DashboardHeaderProps) {
+const DashboardPage: React.FC = () => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<EggRecord[]>([]); 
   const [error, setError] = useState("")
   const [eggRecords, setEggRecords] = useState<EggRecord[]>([])
-  const userName = getUsername();
+  const userName = GetUsername();
   const [orderData, setOrderData] = useState<OrderData[]>([]);
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [searchQuery] = useState("")
+  const [statusFilter] = useState<string>("all")
+
+  const showUserName = true;
 
   useEffect(() => {
     async function fetchEggRecords() {
@@ -86,8 +84,8 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
           setEggRecords(mockEggRecords)
           setLoading(false)
         }, 1000)
-      } catch (err) {
-        console.error("Error fetching egg records:", err)
+      } catch (error) {
+        console.error("Error fetching egg records:", error)
         setError("Failed to load egg collection records. Please try again.")
         setLoading(false)
       }
@@ -95,6 +93,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
 
     fetchEggRecords()
   }, [])
+  console.log(error);
 
   useEffect(() => {
     const fetchBuyers = async() => {
@@ -108,9 +107,9 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
     fetchBuyers();
   }, [])
 
-  const calculatePendingOrders = () => {
-    return orderData.filter((order) => order.status_of_delivery === "pending").length
-  }
+  // const calculatePendingOrders = () => {
+  //   return orderData.filter((order) => order.status_of_delivery === "pending").length
+  // }
 
   const filteredOrders = orderData.filter((order) => {
     // Search filter
@@ -123,20 +122,30 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
     return matchesSearch && matchesStatus
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-500/10 text-yellow-500"
-      case "processing":
-        return "bg-blue-500/10 text-blue-500"
-      case "delivered":
-        return "bg-green-500/10 text-green-500"
-      case "cancelled":
-        return "bg-red-500/10 text-red-500"
-      default:
-        return "bg-gray-500/10 text-gray-500"
-    }
-  }
+  const totalEggsToday = eggRecords?.length
+    ? eggRecords
+        .filter((record) => new Date(record.collection_date).toDateString() === new Date().toDateString())
+        .reduce((sum, record) => sum + record.egg_count, 0)
+    : 0;
+
+  const pendingOrders = orderData?.length
+    ? orderData.filter((o) => o.status_of_delivery === 'pending').length
+    : 0;
+
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case "pending":
+  //       return "bg-yellow-500/10 text-yellow-500"
+  //     case "processing":
+  //       return "bg-blue-500/10 text-blue-500"
+  //     case "delivered":
+  //       return "bg-green-500/10 text-green-500"
+  //     case "cancelled":
+  //       return "bg-red-500/10 text-red-500"
+  //     default:
+  //       return "bg-gray-500/10 text-gray-500"
+  //   }
+  // }
 
   const getStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
@@ -153,10 +162,10 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return format(date, "MMM d, yyyy")
-  }
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString)
+  //   return format(date, "MMM d, yyyy")
+  // }
 
   return (
     <div className="flex min-h-screen bg-muted/40">
@@ -358,16 +367,12 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
             <div className="text-2xl font-bold">
               {loading ? (
                 <Skeleton className="h-8 w-16" />
-              ) : (
-                eggRecords
-                  .filter((record) => new Date(record.collection_date).toDateString() === new Date().toDateString())
-                  .reduce((sum, record) => sum + record.egg_count, 0)
-              )}
+              ) : totalEggsToday || 'Nothing to show'}
             </div>
             <p className="text-xs text-muted-foreground">Across all coops</p>
             <p className="text-xs text-muted-foreground">+15 from yesterday</p>
                 <div className="mt-4">
-                  <Progress value={80} className="h-2" />
+                  <Progress value={totalEggsToday ? 80 : 0} className="h-2" />
                 </div>
           </CardContent>
         </Card>
@@ -379,7 +384,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
               <CardContent>
               <div className="flex flex-col items-center justify-center rounded-lg border p-3 mb-1">
                   <div className="text-2xl font-bold">
-                    {orderData.filter((o) => o.status_of_delivery === "pending").length}
+                    {pendingOrders || 'Nothing to show'}
                   </div>
                   <div className="text-xs text-muted-foreground">Pending</div>
                 </div>
@@ -501,7 +506,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                     <div className="text-xs text-muted-foreground">Today</div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    We've added a new vaccination schedule system to track and manage all fowl vaccinations.
+                    We&apos;ve added a new vaccination schedule system to track and manage all fowl vaccinations.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -512,7 +517,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                     <div className="text-xs text-muted-foreground">2 days ago</div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    We've added a new admin dashboard with analytics, user management, and expenditure tracking
+                    We&apos;ve added a new admin dashboard with analytics, user management, and expenditure tracking
                     features.
                   </p>
                 </div>
@@ -524,7 +529,7 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                     <div className="text-xs text-muted-foreground">5 days ago</div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    We've updated our OrderData management system. You can now track OrderDatas more efficiently.
+                    We&apos;ve updated our OrderData management system. You can now track OrderDatas more efficiently.
                   </p>
                 </div>
               </CardContent>
@@ -537,7 +542,8 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                   <CardDescription>Egg production by coop</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {data.map((coop) => {
+                  {data.length > 0 ? (
+                    data.map((coop) => {
                     // Set progress dynamically based on egg count
                     const progress = coop.egg_count > 0 ? Math.min((coop.egg_count / 3000) * 100, 100) : 0; 
 
@@ -550,7 +556,9 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
                         <Progress value={progress} className="h-2" />
                       </div>
                     );
-                  })}
+                  }) ): (
+                    <p className="text-center text-sm text-muted-foreground">Nothing to show</p>
+                  )}
                   <div className="pt-4">
                     <Link href="/dashboard/eggs">
                       <Button className="w-full">View Detailed Report</Button>
@@ -565,3 +573,4 @@ export default function DashboardPage({ heading, text, showUserName = true }: Da
   )
 }
 
+export default DashboardPage;
