@@ -197,7 +197,7 @@ export default function TasksPage() {
           <DialogContent className="sm:max-w-[525px]">
             <DialogHeader>
               <DialogTitle>Create New Task</DialogTitle>
-              <DialogDescription>Add a new task to your list. Click save when you're done.</DialogDescription>
+              <DialogDescription>Add a new task to your list. Click save when you&apos;re done.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -223,7 +223,8 @@ export default function TasksPage() {
                   <Label htmlFor="priority">Priority</Label>
                   <Select
                     value={newTask.priority}
-                    onValueChange={(value) => setNewTask({ ...newTask, priority: value as any })}
+                    onValueChange={(value) => setNewTask({ ...newTask, 
+                      priority: value as "high" | "low" | "medium" | "urgent" })}
                   >
                     <SelectTrigger id="priority">
                       <SelectValue placeholder="Select priority" />
@@ -340,7 +341,7 @@ export default function TasksPage() {
                     </div>
                     <h3 className="mt-4 text-lg font-semibold">No tasks found</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Try adjusting your search or filters to find what you're looking for.
+                      Try adjusting your search or filters to find what you&apos;re looking for.
                     </p>
                   </div>
                 ) : (
@@ -372,7 +373,8 @@ export default function TasksPage() {
                       <div className="flex items-center gap-2">
                         <Select
                           value={task.status}
-                          onValueChange={(value) => handleStatusChange(task.id, value as any)}
+                          onValueChange={(value) => handleStatusChange(task.id,
+                             value as "pending" | "in-progress" | "completed" | "overdue")}
                         >
                           <SelectTrigger className="h-8 w-[130px]">
                             <SelectValue />
@@ -404,7 +406,7 @@ export default function TasksPage() {
                   <div className="rounded-full bg-muted p-3">
                     <Calendar className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold">Today's Tasks</h3>
+                  <h3 className="mt-4 text-lg font-semibold">Today&apos;s Tasks</h3>
                   <p className="mt-2 text-sm text-muted-foreground">You have 3 tasks scheduled for today.</p>
                 </div>
               </TabsContent>
