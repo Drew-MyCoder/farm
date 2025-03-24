@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Edit, Plus } from "lucide-react"
+import { AlertCircle, Plus } from "lucide-react"
 import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { Badge } from "@/components/ui/badge"
@@ -23,38 +23,27 @@ interface EggRecord {
   broken_eggs: number
   total_feed: number
   notes: string
-  
 }
 
 export default function EggsPage() {
   const [eggRecords, setEggRecords] = useState<EggRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [data, setData] = useState<EggRecord[]>([]); 
-
 
   useEffect(() => {
     async function fetchEggRecords() {
       try {
-        setLoading(true)
-        const mockEggRecords: EggRecord[] = await getCoops();
-            if(mockEggRecords) {
-            setData(mockEggRecords);
-            console.log(mockEggRecords, ' this is my response from database')
-          }
-         
-
-        // Simulate API call
-        setTimeout(() => {
-          setEggRecords(mockEggRecords)
-          setLoading(false)
-        }, 1000)
-      } catch (err) {
-        console.error("Error fetching egg records:", err)
-        setError("Failed to load egg collection records. Please try again.")
-        setLoading(false)
-      }
+      setLoading(true);
+      const response = await getCoops();  // Ensure getCoops() returns an array
+      setEggRecords(Array.isArray(response) ? response : []);  // Ensure it's an array
+    } catch (err) {
+      console.error("Error fetching egg records:", err);
+      setError("Failed to load egg collection records. Please try again.");
+      setEggRecords([]); // Set to empty array on error
+    } finally {
+      setLoading(false);
     }
+  }
 
     fetchEggRecords()
   }, [])
@@ -96,6 +85,18 @@ export default function EggsPage() {
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      ) : eggRecords.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Nothing to show</CardTitle>
+            <CardDescription>No egg collection records available.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center py-4 text-muted-foreground">
+              Start by recording your first collection.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <Card>
           <CardHeader>
@@ -103,63 +104,44 @@ export default function EggsPage() {
             <CardDescription>Showing the most recent egg collection records across all coops.</CardDescription>
           </CardHeader>
           <CardContent>
-            {eggRecords.length === 0 ? (
-              <p className="text-center py-4 text-muted-foreground">
-                No egg collection records found. Start by recording your first collection.
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Coop</TableHead>
-                    <TableHead className="text-right">Eggs Collected</TableHead>
-                    <TableHead className="text-right">Broken Eggs</TableHead>
-                    <TableHead className="text-right">Efficiency</TableHead>
-                    <TableHead className="text-right">Feed (kg)</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {eggRecords.map((record) => {
-                    const efficiency = calculateEfficiency(record.egg_count, record.broken_eggs)
-                    let efficiencyColor = "bg-green-500/10 text-green-500"
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Coop</TableHead>
+                  <TableHead className="text-right">Eggs Collected</TableHead>
+                  <TableHead className="text-right">Broken Eggs</TableHead>
+                  <TableHead className="text-right">Efficiency</TableHead>
+                  <TableHead className="text-right">Feed (kg)</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {eggRecords.map((record) => {
+                  const efficiency = calculateEfficiency(record.egg_count, record.broken_eggs)
+                  let efficiencyColor = "bg-green-500/10 text-green-500"
 
-                    if (efficiency < 90) {
-                      efficiencyColor = "bg-yellow-500/10 text-yellow-500"
-                    }
-                    if (efficiency < 80) {
-                      efficiencyColor = "bg-red-500/10 text-red-500"
-                    }
+                  if (efficiency < 90) efficiencyColor = "bg-yellow-500/10 text-yellow-500"
+                  if (efficiency < 80) efficiencyColor = "bg-red-500/10 text-red-500"
 
-                    return (
-                      <TableRow key={record.id}>
-                        <TableCell>{format(new Date(record.collection_date), "MMM d, yyyy")}</TableCell>
-                        <TableCell>{record.coop_name}</TableCell>
-                        <TableCell className="text-right">{record.egg_count}</TableCell>
-                        <TableCell className="text-right">{record.broken_eggs}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline" className={efficiencyColor}>
-                            {efficiency.toFixed(1)}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{record.total_feed}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{record.notes || "—"}</TableCell>
-                        {/* <TableCell className="text-right">
-                          <Link href={`/dashboard/eggs/${record.id}/edit`}>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                          </Link>
-                        </TableCell> */}
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            )}
+                  return (
+                    <TableRow key={record.id}>
+                      <TableCell>{format(parseISO(record.collection_date), "MMM d, yyyy")}</TableCell>
+                      <TableCell>{record.coop_name}</TableCell>
+                      <TableCell className="text-right">{record.egg_count}</TableCell>
+                      <TableCell className="text-right">{record.broken_eggs}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline" className={efficiencyColor}>
+                          {efficiency.toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{record.total_feed}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{record.notes || "—"}</TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
@@ -173,9 +155,11 @@ export default function EggsPage() {
             <div className="text-2xl font-bold">
               {loading ? (
                 <Skeleton className="h-8 w-16" />
+              ) : eggRecords.length === 0 ? (
+                "Nothing to show"
               ) : (
                 eggRecords
-                  .filter((record) => new Date(record.collection_date).toDateString() === new Date().toDateString())
+                  .filter((record) => parseISO(record.collection_date).toDateString() === new Date().toDateString())
                   .reduce((sum, record) => sum + record.egg_count, 0)
               )}
             </div>
@@ -191,6 +175,8 @@ export default function EggsPage() {
             <div className="text-2xl font-bold">
               {loading ? (
                 <Skeleton className="h-8 w-16" />
+              ) : eggRecords.length === 0 ? (
+                "Nothing to show"
               ) : (
                 (() => {
                   const totalEggs = eggRecords.reduce((sum, record) => sum + record.egg_count, 0)
@@ -202,47 +188,7 @@ export default function EggsPage() {
             <p className="text-xs text-muted-foreground">Eggs collected vs broken</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Top Performing Coop</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                (() => {
-                  const coopPerformance = eggRecords.reduce(
-                    (acc, record) => {
-                      if (!acc[record.coop_name]) {
-                        acc[record.coop_name] = { eggs: 0, count: 0 }
-                      }
-                      acc[record.coop_name].eggs += record.egg_count
-                      acc[record.coop_name].count += 1
-                      return acc
-                    },
-                    {} as Record<string, { eggs: number; count: number }>,
-                  )
-
-                  let topCoop = { name: "None", average: 0 }
-
-                  Object.entries(coopPerformance).forEach(([name, data]) => {
-                    const average = data.eggs / data.count
-                    if (average > topCoop.average) {
-                      topCoop = { name, average }
-                    }
-                  })
-
-                  return topCoop.name
-                })()
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Based on average egg production</p>
-          </CardContent>
-        </Card>
       </div>
     </DashboardShell>
   )
 }
-
