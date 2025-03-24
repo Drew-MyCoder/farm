@@ -88,19 +88,23 @@ export default function NewCoopPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      toast({
-        title: "Success",
-        description: "Coop created successfully",
-      })
+      // toast({
+      //   title: "Success",
+      //   description: "Coop created successfully",
+      // })
+      toast.success("Coop created successfully");
 
       router.push("/dashboard/coops")
     } catch (error) {
       console.error("Error creating coop:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create coop",
-        variant: "destructive",
-      })
+      // toast({
+      //   title: "Error",
+      //   description: error instanceof Error ? error.message : "Failed to create coop",
+      //   variant: "destructive",
+      // })
+      toast.error('Failed to create coop. Please try again.', {
+        description: 'Please try again.',
+      });
     } finally {
       setIsSubmitting(false)
     }
