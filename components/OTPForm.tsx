@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
@@ -70,7 +70,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     }
   }, [serverOtpData, userData]);
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === 'otp') {
       const otpValue = value.replace(/[^0-9]/g, '').slice(0, 6);
@@ -80,7 +80,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     }
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setStatus({ type: '', message: '' });
@@ -154,7 +154,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
         }
       }, 1000); // Brief delay to show success message 
     
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = 'Failed to verify OTP. Please try again.';
       
       if (axios.isAxiosError(error)) {
@@ -177,7 +177,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
       }
       setStatus({ 
         type: 'error', 
-        message: error.message || errorMessage 
+        message: errorMessage 
       });
     } finally {
       setIsSubmitting(false);
@@ -218,7 +218,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
       }
       
       setStatus({ type: 'success', message: 'New OTP sent successfully!' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = 'Failed to resend OTP. Please try again later.';
       
       if (axios.isAxiosError(error) && error.response?.data?.message) {
