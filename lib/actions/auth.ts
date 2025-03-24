@@ -72,11 +72,11 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials,
       return response.data
 
             
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Login failed', error)
             // throw error;
             return { 
-                error: error.response?.data?.message || 'Login failed. Please try again.' 
+                error: error || 'Login failed. Please try again.' 
               };
         };
 }
@@ -103,7 +103,7 @@ export const signUp = async (params: AuthCredentials) => {
 
         console.log(response)
 
-        const { access_token } = response.data;
+        // const { access_token } = response.data;
 
         redirect('/sign-in');
         // console.log(access_token);
