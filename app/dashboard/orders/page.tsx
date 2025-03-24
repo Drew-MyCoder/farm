@@ -24,7 +24,7 @@ import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { format } from "date-fns"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { cn, getUsername } from "@/lib/utils"
+import { cn, GetUsername } from "@/lib/utils"
 import axios from "axios"
 import { useRouter } from "next/navigation"
 import { getBuyers } from "@/lib/actions/auth"
@@ -57,7 +57,7 @@ export default function OrdersPage() {
     fetchBuyers();
   }, [])
   
-
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false)
@@ -72,8 +72,8 @@ export default function OrdersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: '', message: ''});
   const router = useRouter();
-  const userName = getUsername();
-  console.log('this is the new user name in oder', userName);
+  const userName = GetUsername();
+  console.log('this is the new user name in oder', userName, submitting);
   
   
 
@@ -102,7 +102,7 @@ export default function OrdersPage() {
     setData(data.filter((order) => order.id !== orderId))
   }
 
-  const handleCreateOrder = async (e: any) => {
+  const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     const id = Math.max(...data.map((o) => o.id), 0) + 1
@@ -171,6 +171,8 @@ export default function OrdersPage() {
           // No response received
           errorMessage = 'Server not responding. Please check your connection and try again.';
         }
+        setErrorMsg(errorMessage);
+        console.log(errorMsg);
       }
       console.log(error)
       setStatus({ 
@@ -218,15 +220,15 @@ export default function OrdersPage() {
     return format(date, "MMM d, yyyy")
   }
 
-  const calculateTotalRevenue = () => {
-    return data
-      .filter((order) => order.status_of_delivery !== "cancelled")
-      .reduce((sum, order) => sum + order.amount, 0)
-  }
+  // const calculateTotalRevenue = () => {
+  //   return data
+  //     .filter((order) => order.status_of_delivery !== "cancelled")
+  //     .reduce((sum, order) => sum + order.amount, 0)
+  // }
 
-  const calculatePendingOrders = () => {
-    return data.filter((order) => order.status_of_delivery === "pending").length
-  }
+  // const calculatePendingOrders = () => {
+  //   return data.filter((order) => order.status_of_delivery === "pending").length
+  // }
 
   const calculateTotalCrates = () => {
     return data
@@ -247,7 +249,7 @@ export default function OrdersPage() {
           <DialogContent className="sm:max-w-[525px]">
             <DialogHeader>
               <DialogTitle>Create New Order</DialogTitle>
-              <DialogDescription>Add a new customer order. Click save when you're done.</DialogDescription>
+              <DialogDescription>Add a new customer order. Click save when you&apos;re done.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -328,7 +330,8 @@ export default function OrdersPage() {
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={newOrder.status_of_delivery}
-                  onValueChange={(value) => setNewOrder({ ...newOrder, status_of_delivery: value as any })}
+                  onValueChange={(value) => setNewOrder({ ...newOrder, 
+                    status_of_delivery: value as "pending" | "processing" | "delivered" | "cancelled" })}
                 >
                   <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
@@ -403,7 +406,7 @@ export default function OrdersPage() {
                     </div>
                     <h3 className="mt-4 text-lg font-semibold">No data found</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Try adjusting your search or filters to find what you're looking for.
+                      Try adjusting your search or filters to find what you&apos;re looking for.
                     </p>
                   </div>
                 ) : (
@@ -444,7 +447,8 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-2">
                         <Select
                           value={order.status_of_delivery}
-                          onValueChange={(value) => handleStatusChange(order.id, value as any)}
+                          onValueChange={(value) => handleStatusChange(order.id, 
+                            value as "pending" | "processing" | "delivered" | "cancelled")}
                         >
                           <SelectTrigger className="h-8 w-[130px]">
                             <SelectValue />
@@ -514,7 +518,8 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-2">
                           <Select
                             value={order.status_of_delivery}
-                            onValueChange={(value) => handleStatusChange(order.id, value as any)}
+                            onValueChange={(value) => handleStatusChange(order.id, 
+                              value as "pending" | "processing" | "delivered" | "cancelled")}
                           >
                             <SelectTrigger className="h-8 w-[130px]">
                               <SelectValue />
@@ -584,7 +589,8 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-2">
                           <Select
                             value={order.status_of_delivery}
-                            onValueChange={(value) => handleStatusChange(order.id, value as any)}
+                            onValueChange={(value) => handleStatusChange(order.id, 
+                              value as "pending" | "processing" | "delivered" | "cancelled")}
                           >
                             <SelectTrigger className="h-8 w-[130px]">
                               <SelectValue />
@@ -654,7 +660,8 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-2">
                           <Select
                             value={order.status_of_delivery}
-                            onValueChange={(value) => handleStatusChange(order.id, value as any)}
+                            onValueChange={(value) => handleStatusChange(order.id, 
+                              value as "pending" | "processing" | "delivered" | "cancelled")}
                           >
                             <SelectTrigger className="h-8 w-[130px]">
                               <SelectValue />

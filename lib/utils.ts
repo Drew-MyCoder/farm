@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 
 
 
-export function getUsername() {
+export function GetUsername() {
 
   const [userName, setUserName] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ export function getUsername() {
 }
 
 
-export function getUserId() {
+export function GetUserId() {
 
   const [userId, setUserId] = useState<string | null>(null);
 
