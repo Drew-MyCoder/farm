@@ -17,7 +17,7 @@ import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn, getUserId } from "@/lib/utils"
+import { cn, GetUserId,  } from "@/lib/utils"
 import { getCoops } from "@/lib/actions/auth"
 import axios from "axios"
 
@@ -65,7 +65,7 @@ export default function EggUpdatePage() {
     user_id: 0,
     efficiency: 0,
   })
-  const userId = getUserId();
+  const userId = GetUserId();
 
  
 
