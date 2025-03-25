@@ -8,15 +8,17 @@ import axiosInstance from '@/axiosInstance';
 
 
 
-export const signInWithCredentials = async (params: Pick<AuthCredentials,
-    'username' | 'password'>) => {
 
-        const { username, password } = params;
+export const signInWithCredentials = async (params: Pick<AuthCredentials,
+    'firstname' | 'lastname' | 'password'>) => {
+
+        const { firstname, lastname, password } = params;
 
         try {
             const response = await axiosInstance.post(
                 '/api/v1/login',
-                { username, password }
+                { username: firstname+' '+lastname, 
+                password }
             )
             
             if (!response) {
@@ -68,7 +70,7 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials,
         return { success: true, 
             redirectUrl: response.data.roles === 'admin' ? '/admin' : '/dashboard' };
       }
-  
+    //   toast.success("Successfully logged up");
       return response.data
 
             
@@ -83,13 +85,13 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials,
 
 
 export const signUp = async (params: AuthCredentials) => {
-    const { username, email, password } = params;
+    const { firstname, lastname, email, password } = params;
 
     try {
         const response = await axiosInstance.post(
             '/api/v1/auth/register', {
                 email, 
-                username, 
+                username: firstname+' '+lastname, 
                 password, 
                 status: 'active', 
                 role: 'feeder'
@@ -116,12 +118,13 @@ export const signUp = async (params: AuthCredentials) => {
 
         // store token
         // localStorage.setItem("token", access_token);
-
+        // toast.success("Successfully signed in");
         return response.data; 
         
     } catch (error) {
         console.error('Login failed', error)
         throw error;
+        
     };
 }
 
