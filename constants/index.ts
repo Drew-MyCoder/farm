@@ -1,12 +1,14 @@
 export const FIELD_NAMES = {
-    username: "Full name",
+    firstname: "First name",
+    lastname: "Last name",
     email: "Email",
     password: "Password",
     otp: "OTP",
   };
   
   export const FIELD_TYPES = {
-    username: "text",
+    firstname: "text",
+    lastname: "text",
     email: "email",
     password: "password",
     otp: "number"
