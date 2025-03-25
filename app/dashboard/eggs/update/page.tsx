@@ -85,16 +85,15 @@ export default function EggUpdatePage() {
 
         setLoading(true);
         const mockCoops: Coop[] = await getCoops();
-        if(mockCoops) {
-          
-          console.log(mockCoops, ' this is my coops from database')
+        if (!Array.isArray(mockCoops)) {
+          console.error("Error: getCoops() did not return an array", mockCoops);
+          setCoops([]);
+          return;
         }
-
-        // Simulate API call
-        setTimeout(() => {
-          setCoops(mockCoops)
-          setLoading(false)
-        }, 500)
+  
+        console.log(mockCoops, "this is my coops from database");
+  
+        setCoops(mockCoops);
       } catch (error) {
         console.error("Error fetching coops:", error)
 
@@ -260,12 +259,14 @@ export default function EggUpdatePage() {
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <span className="ml-2">Loading coops...</span>
                       </div>
-                    ) : (
+                    ) : coops.length > 0 ? (
                       coops.map((coop) => (
                         <SelectItem key={coop.id} value={String(coop.id)}>
                           {coop.coop_name}
                         </SelectItem>
                       ))
+                    ) : (
+                      <div className="py-2 text-center">No coops available</div>
                     )}
                   </SelectContent>
                 </Select>
