@@ -10,6 +10,10 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { setCookie } from 'cookies-next';
 
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+
+
 // Define the OTP data type
 type OtpData = {
   user?: string;
@@ -100,7 +104,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/v1/verify",
+        `${API_BASE_URL}/api/v1/verify`,
         { username: formData.username, otp: formData.otp },
         { headers: { "Content-Type": "application/json" }}
       );

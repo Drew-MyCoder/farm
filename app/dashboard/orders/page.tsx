@@ -29,6 +29,10 @@ import axios from "axios"
 import { useRouter } from "next/navigation"
 import { getBuyers } from "@/lib/actions/auth"
 
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+
+
 interface Order {
   id: number
   name: string
@@ -129,7 +133,7 @@ export default function OrdersPage() {
     
     try {
       const response = await axios.post(
-        "http://localhost:8000/buyers/buyer",
+        `${API_BASE_URL}/buyers/buyer`,
         {
           name: newOrder.name,
           date_of_delivery: newOrder.date_of_delivery,

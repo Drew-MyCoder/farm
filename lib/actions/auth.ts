@@ -5,6 +5,10 @@ import axios from 'axios';
 import { redirect } from "next/navigation";
 import { cookies } from 'next/headers';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+
+
+
 
 export const signInWithCredentials = async (params: Pick<AuthCredentials,
     'username' | 'password'>) => {
@@ -13,7 +17,7 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials,
 
         try {
             const response = await axios.post(
-                "http://localhost:8000/api/v1/login",
+                `${API_BASE_URL}/api/v1/login`,
                 { username, password },
                 { headers: { "Content-Type": "application/json"}},
                 
@@ -87,7 +91,7 @@ export const signUp = async (params: AuthCredentials) => {
 
     try {
         const response = await axios.post(
-            "http://localhost:8000/api/v1/auth/register",
+            `${API_BASE_URL}/api/v1/auth/register`,
             { email, username, password, status: 'active', role: 'feeder' },
             { headers: { "Content-Type": "application/json"}},
             
@@ -124,7 +128,7 @@ export const signUp = async (params: AuthCredentials) => {
 export const getBuyers = async () => {
     try {
         const response = await axios.get(
-            "http://localhost:8000/buyers",
+            `${API_BASE_URL}/buyers`,
             { headers: { "Content-Type": "application/json"}},         
         );
         if (!response){
@@ -149,7 +153,7 @@ export const getBuyers = async () => {
 export const getCoops = async () => {
     try {
         const response = await axios.get(
-            "http://localhost:8000/coops",
+            `${API_BASE_URL}/coops`,
             { headers: { "Content-Type": "application/json"}},         
         );
         if (!response){

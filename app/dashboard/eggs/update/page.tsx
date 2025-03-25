@@ -21,6 +21,10 @@ import { cn, GetUserId,  } from "@/lib/utils"
 import { getCoops } from "@/lib/actions/auth"
 import axios from "axios"
 
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+
+
 interface Coop {
   id: string
   coop_name: string
@@ -147,7 +151,7 @@ export default function EggUpdatePage() {
     try {
       const response = await axios.patch(
         
-        `http://localhost:8000/coops/${formData.coopId}`,
+        `${API_BASE_URL}/coops/${formData.coopId}`,
         {
           coopId: formData.coopId,
           collection_date: formData.collection_date,

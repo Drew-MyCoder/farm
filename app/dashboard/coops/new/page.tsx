@@ -11,12 +11,18 @@ import { toast } from "sonner"
 import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { useState } from "react"
+import axios from "axios"
+
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+
 
 interface CoopData {
   total_fowls: number
   total_dead_fowls: number
   total_feed: number
   coop_name: string
+  user_id: number
 }
 
 export default function NewCoopPage() {
@@ -26,6 +32,7 @@ export default function NewCoopPage() {
     total_dead_fowls: 0,
     total_feed: 0,
     coop_name: "",
+    user_id: 0
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -84,6 +91,48 @@ export default function NewCoopPage() {
       //   },
       //   body: JSON.stringify(formData),
       // })
+      const response = await axios.post(
+        
+        `${API_BASE_URL}/coopscoop`,
+        {
+          total_feed: formData.total_feed,
+          status: "active",
+          total_dead_fowls: formData.total_dead_fowls,
+          total_fowls: formData.total_fowls,
+          coop_name: formData.coop_name,
+          user_id: formData.user_id,
+        },
+        { headers: { "Content-Type": "application/json" }},
+      );
+      // console.log('full api order response', response);
+      // console.log("Submittin to coop id:", coopId)
+      
+      const data = await response
+      if (!response) {
+        throw new Error(data.statusText || 'Failed to create coop');
+      }
+      if (response.status !== 200) {
+        throw new Error (response.statusText || 'sorry something went wrong. try again');
+      }
+      // setStatus({ type: 'Success', message: 'Order created successfully'});
+      // router.push('/dashboard')
+
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // toast.success("Egg collection data saved successfully");
+
+
+      // Reset form after successful submission
+      setFormData({
+        user_id: 0,
+        total_feed: 0,
+        total_dead_fowls: 0,
+        total_fowls: 0,
+        coop_name: "",
+      })
+
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -94,7 +143,7 @@ export default function NewCoopPage() {
       // })
       toast.success("Coop created successfully");
 
-      router.push("/dashboard/coops")
+      router.push("/dashboard")
     } catch (error) {
       console.error("Error creating coop:", error)
       // toast({
