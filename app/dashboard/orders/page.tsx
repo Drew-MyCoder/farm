@@ -25,12 +25,10 @@ import { format } from "date-fns"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { cn, GetUsername } from "@/lib/utils"
-import axios from "axios"
 import { useRouter } from "next/navigation"
 import { getBuyers } from "@/lib/actions/auth"
-
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+import axiosInstance from "@/axiosInstance"
+import { toast } from "sonner"
 
 
 interface Order {
@@ -61,7 +59,7 @@ export default function OrdersPage() {
     fetchBuyers();
   }, [])
   
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false)
@@ -77,7 +75,7 @@ export default function OrdersPage() {
   const [status, setStatus] = useState({ type: '', message: ''});
   const router = useRouter();
   const userName = GetUsername();
-  console.log('this is the new user name in oder', userName, submitting);
+  console.log('this is the new user name in oder', userName, submitting, status);
   
   
 
@@ -132,8 +130,8 @@ export default function OrdersPage() {
     })
     
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/buyers/buyer`,
+      const response = await axiosInstance.post(
+        '/buyers/buyer',
         {
           name: newOrder.name,
           date_of_delivery: newOrder.date_of_delivery,
@@ -141,8 +139,7 @@ export default function OrdersPage() {
           amount: newOrder.amount,
           status_of_delivery: newOrder.status_of_delivery,
           by: userName,
-        },
-        { headers: { "Content-Type": "application/json" }},
+        }
       );
       // console.log('full api order response', response);
       
@@ -155,33 +152,42 @@ export default function OrdersPage() {
       }
       setStatus({ type: 'Success', message: 'Order created successfully'});
       router.push('/dashboard/orders')
-    } catch (error) {
-      let errorMessage = 'Failed to create order. Please try again.'
+    } catch (error: unknown) {
+      const errorMessage = 'Failed to create order. Please try again.'
+      console.log(error);
 
-      if (axios.isAxiosError(error)) {
-        if (error.response){
-          // server errors
-          const status = error.response.status;
-          if (status === 401) {
-            errorMessage = 'Invalid OTP or username. Please check and try again.';
-          } else if (status === 404) {
-            errorMessage = 'User not found. Please check your username.';
-          } else if (status === 410) {
-            errorMessage = 'OTP has expired. Please request a new one.';
-          } else {
-            errorMessage = error.response.data?.message || errorMessage;
-          } 
-        } else if (error.request) {
-          // No response received
-          errorMessage = 'Server not responding. Please check your connection and try again.';
+      axiosInstance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+          let errorMessage = "An error occurred. Please try again."; // Default error message
+      
+          if (error.response) {
+            // Server responded with a status code
+            const status = error.response.status;
+      
+            if (status === 401) {
+              errorMessage = "Invalid OTP or username. Please check and try again.";
+            } else if (status === 404) {
+              errorMessage = "User not found. Please check your username.";
+            } else if (status === 410) {
+              errorMessage = "OTP has expired. Please request a new one.";
+            } else {
+              errorMessage = error.response.data?.message || errorMessage;
+            }
+          } else if (error.request) {
+            // Request was made but no response received
+            errorMessage = "Server not responding. Please check your connection and try again.";
+          }
+      
+          return Promise.reject(new Error(errorMessage)); // Ensure error is propagated
         }
-        setErrorMsg(errorMessage);
-        console.log(errorMsg);
-      }
-      console.log(error)
+      );
+      toast.error('Failed to verify otp. Please try again.', {
+        description: error instanceof Error ? error.message : "Failed to verify otp",
+      });
       setStatus({ 
         type: 'error', 
-        message: status.message || 'Failed to create order. Please try again.' 
+        message: errorMessage 
       });
     } finally {
       setSubmitting(false);

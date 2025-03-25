@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { setCookie } from 'cookies-next';
+import axiosInstance from '@/axiosInstance';
+import { toast } from 'sonner';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+
+
 
 
 // Define the OTP data type
@@ -29,7 +31,8 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
   const [userData, setUserData] = useState<OtpData | null>(null);
   
   const [formData, setFormData] = useState({
-    username: '',
+    firstname: '',
+    lastname: '',
     otp: ''
   });
   const [status, setStatus] = useState({ type: '', message: '' });
@@ -90,8 +93,14 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     setStatus({ type: '', message: '' });
 
     // Validation
-    if (!formData.username.trim()) {
-      setStatus({ type: 'error', message: 'Username is required' });
+    if (!formData.firstname.trim()) {
+      setStatus({ type: 'error', message: 'firstname is required' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.lastname.trim()) {
+      setStatus({ type: 'error', message: 'lastname is required' });
       setIsSubmitting(false);
       return;
     }
@@ -103,12 +112,12 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     }
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/v1/verify`,
-        { username: formData.username, otp: formData.otp },
-        { headers: { "Content-Type": "application/json" }}
-      );
-      
+      const response = await axiosInstance.post(
+        '/api/v1/verify',
+        { username: formData.firstname+' '+formData.lastname,
+          otp: formData.otp }
+      )
+
       if (!response) {
         throw new Error('Verification failed');
       }
@@ -132,7 +141,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
 
       // Store user information in localStorage
       if (user) {
-        localStorage.setItem("userName", user || formData.username);
+        localStorage.setItem("userName", user || formData.firstname);
       }
       
       if (user_id) {
@@ -145,7 +154,8 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
       setStatus({ type: 'success', message: 'OTP verified successfully!' });
       
       // Optional: Reset form after successful submission
-      setFormData({ username: '', otp: '' });
+      setFormData({ firstname: '', lastname: '', otp: '' });
+      toast.success("Successfully verified");
       
       // Redirect based on user role
       setTimeout(() => {
@@ -156,29 +166,41 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
         } else {
           router.push("/");
         }
-      }, 1000); // Brief delay to show success message 
+      }, 1); // Brief delay to show success message 
     
     } catch (error: unknown) {
-      let errorMessage = 'Failed to verify OTP. Please try again.';
+      const errorMessage = 'Failed to verify OTP. Please try again.';
+      console.log(error);
       
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          // Server responded with an error
-          const status = error.response.status;
-          if (status === 401) {
-            errorMessage = 'Invalid OTP or username. Please check and try again.';
-          } else if (status === 404) {
-            errorMessage = 'User not found. Please check your username.';
-          } else if (status === 410) {
-            errorMessage = 'OTP has expired. Please request a new one.';
-          } else {
-            errorMessage = error.response.data?.message || errorMessage;
+      axiosInstance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+          let errorMessage = "An error occurred. Please try again."; // Default error message
+      
+          if (error.response) {
+            // Server responded with a status code
+            const status = error.response.status;
+      
+            if (status === 401) {
+              errorMessage = "Invalid OTP or username. Please check and try again.";
+            } else if (status === 404) {
+              errorMessage = "User not found. Please check your username.";
+            } else if (status === 410) {
+              errorMessage = "OTP has expired. Please request a new one.";
+            } else {
+              errorMessage = error.response.data?.message || errorMessage;
+            }
+          } else if (error.request) {
+            // Request was made but no response received
+            errorMessage = "Server not responding. Please check your connection and try again.";
           }
-        } else if (error.request) {
-          // No response received
-          errorMessage = 'Server not responding. Please check your connection and try again.';
+      
+          return Promise.reject(new Error(errorMessage)); // Ensure error is propagated
         }
-      }
+      );
+      toast.error('Failed to verify otp. Please try again.', {
+        description: error instanceof Error ? error.message : "Failed to verify otp",
+      });
       setStatus({ 
         type: 'error', 
         message: errorMessage 
@@ -189,8 +211,13 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
   };
 
   const handleResendOTP = async () => {
-    if (!formData.username.trim()) {
-      setStatus({ type: 'error', message: 'Please enter your username to resend OTP' });
+    if (!formData.firstname.trim()) {
+      setStatus({ type: 'error', message: 'Please enter your firstname to resend OTP' });
+      return;
+    }
+
+    if (!formData.lastname.trim()) {
+      setStatus({ type: 'error', message: 'Please enter your lastname to resend OTP' });
       return;
     }
     
@@ -198,24 +225,23 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     setStatus({ type: '', message: '' });
     
     try {
-      const apiUrl = "http://localhost:8000/api/v1";
-      const response = await axios.post(
-        `${apiUrl}/verify`,
-        { username: formData.username },
-        { headers: { "Content-Type": "application/json" }}
-      );
+      const response = await axiosInstance.post(
+       '/verify',
+        { username: formData.firstname+' '+formData.lastname },
+      )
+      
       
       // If the server returns new OTP data, update our state
       if (response.data?.message || response.data?.email) {
         setUserData({
-          user: formData.username,
+          user: formData.firstname+' '+formData.lastname,
           message: response.data.message,
           email: response.data.email
         });
         
         // Store updated data in localStorage
         localStorage.setItem('otpData', JSON.stringify({
-          user: formData.username,
+          user: formData.firstname+' '+formData.lastname,
           message: response.data.message,
           email: response.data.email
         }));
@@ -223,11 +249,32 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
       
       setStatus({ type: 'success', message: 'New OTP sent successfully!' });
     } catch (error: unknown) {
-      let errorMessage = 'Failed to resend OTP. Please try again later.';
+      console.log(error);
+      const errorMessage = 'Failed to resend OTP. Please try again later.';
       
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
+      axiosInstance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+          let errorMessage = "An error occurred. Please try again."; // Default error message
+      
+          if (error.response) {
+            const status = error.response.status;
+      
+            if (status === 401) {
+              errorMessage = "Invalid OTP or username. Please check and try again.";
+            } else if (status === 404) {
+              errorMessage = "User not found. Please check your username.";
+            } else if (status === 410) {
+              errorMessage = "OTP has expired. Please request a new one.";
+            }
+          } else if (error.request) {
+            errorMessage = "Server not responding. Please check your connection and try again.";
+          }
+      
+          return Promise.reject(new Error(errorMessage));
+        }
+      );
+      
       
       setStatus({ type: 'error', message: errorMessage });
     } finally {
@@ -276,16 +323,31 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
             )}
             
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
-                Username
+              <label htmlFor="firstname" className="text-sm font-medium">
+                Firstname
               </label>
               <Input
-                id="username"
-                name="username"
+                id="firstname"
+                name="firstname"
                 type="text"
-                value={formData.username}
+                value={formData.firstname}
                 onChange={handleChange}
-                placeholder="Enter your username"
+                placeholder="Enter your firstname"
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="lastname" className="text-sm font-medium">
+                Lastname
+              </label>
+              <Input
+                id="lastname"
+                name="lastname"
+                type="text"
+                value={formData.lastname}
+                onChange={handleChange}
+                placeholder="Enter your lastname"
                 className="w-full"
               />
             </div>
@@ -326,7 +388,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
               variant="outline"
               className="w-full"
               onClick={handleResendOTP}
-              disabled={isResending || !formData.username.trim()}
+              disabled={isResending || !formData.firstname.trim() || !formData.lastname.trim()}
             >
               {isResending ? 'Sending...' : 'Resend OTP'}
             </Button>

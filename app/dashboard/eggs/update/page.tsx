@@ -19,10 +19,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn, GetUserId,  } from "@/lib/utils"
 import { getCoops } from "@/lib/actions/auth"
-import axios from "axios"
-
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+import axiosInstance from "@/axiosInstance"
 
 
 interface Coop {
@@ -149,9 +146,9 @@ export default function EggUpdatePage() {
     setIsSubmitting(true)
 
     try {
-      const response = await axios.patch(
+      const response = await axiosInstance.patch(
         
-        `${API_BASE_URL}/coops/${formData.coopId}`,
+        '/coops/${formData.coopId}',
         {
           coopId: formData.coopId,
           collection_date: formData.collection_date,
@@ -167,8 +164,7 @@ export default function EggUpdatePage() {
           coop_name: formData.coop_name,
           user_id: userId,
           efficiency: calculateEfficiency(formData.egg_count, formData.broken_eggs)
-        },
-        { headers: { "Content-Type": "application/json" }},
+        }
       );
       // console.log('full api order response', response);
       // console.log("Submittin to coop id:", coopId)

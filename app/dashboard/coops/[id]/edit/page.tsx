@@ -46,7 +46,7 @@ export default function EditCoopPage() {
           }
           setCoop(mockCoop)
           setLoading(false)
-        }, 1000)
+        }, 1)
       } catch (err) {
         console.error("Error fetching coop:", err)
         setError("Failed to load coop data. Please try again.")

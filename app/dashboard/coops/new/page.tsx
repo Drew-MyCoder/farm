@@ -11,10 +11,7 @@ import { toast } from "sonner"
 import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { useState } from "react"
-import axios from "axios"
-
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
+import axiosInstance from "@/axiosInstance"
 
 
 interface CoopData {
@@ -91,9 +88,9 @@ export default function NewCoopPage() {
       //   },
       //   body: JSON.stringify(formData),
       // })
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         
-        `${API_BASE_URL}/coopscoop`,
+        '/coopscoop',
         {
           total_feed: formData.total_feed,
           status: "active",
@@ -101,8 +98,7 @@ export default function NewCoopPage() {
           total_fowls: formData.total_fowls,
           coop_name: formData.coop_name,
           user_id: formData.user_id,
-        },
-        { headers: { "Content-Type": "application/json" }},
+        }
       );
       // console.log('full api order response', response);
       // console.log("Submittin to coop id:", coopId)
@@ -119,7 +115,7 @@ export default function NewCoopPage() {
 
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1))
 
       // toast.success("Egg collection data saved successfully");
 
@@ -135,7 +131,7 @@ export default function NewCoopPage() {
 
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1))
 
       // toast({
       //   title: "Success",
