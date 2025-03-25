@@ -1,7 +1,7 @@
 'use server';
 
 
-import axios from 'axios';
+
 import { redirect } from "next/navigation";
 import { cookies } from 'next/headers';
 import axiosInstance from '@/axiosInstance';
