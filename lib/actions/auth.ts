@@ -4,9 +4,7 @@
 import axios from 'axios';
 import { redirect } from "next/navigation";
 import { cookies } from 'next/headers';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
-
+import axiosInstance from '@/axiosInstance';
 
 
 
@@ -16,12 +14,10 @@ export const signInWithCredentials = async (params: Pick<AuthCredentials,
         const { username, password } = params;
 
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/v1/login`,
-                { username, password },
-                { headers: { "Content-Type": "application/json"}},
-                
-            );
+            const response = await axiosInstance.post(
+                '/api/v1/login',
+                { username, password }
+            )
             
             if (!response) {
                 return { message: 'sorry unable to connect' }
@@ -90,12 +86,14 @@ export const signUp = async (params: AuthCredentials) => {
     const { username, email, password } = params;
 
     try {
-        const response = await axios.post(
-            `${API_BASE_URL}/api/v1/auth/register`,
-            { email, username, password, status: 'active', role: 'feeder' },
-            { headers: { "Content-Type": "application/json"}},
-            
-        );
+        const response = await axiosInstance.post(
+            '/api/v1/auth/register', {
+                email, 
+                username, 
+                password, 
+                status: 'active', 
+                role: 'feeder'
+    })
         // console.log(username, password);
         if (!response) {
             return { message: 'sorry unable to connect' }
@@ -107,9 +105,13 @@ export const signUp = async (params: AuthCredentials) => {
 
         console.log(response)
 
+        if (response.status === 200) {
+            redirect('/sign-in');
+        }
+
         // const { access_token } = response.data;
 
-        redirect('/sign-in');
+        
         // console.log(access_token);
 
         // store token
@@ -127,17 +129,17 @@ export const signUp = async (params: AuthCredentials) => {
 
 export const getBuyers = async () => {
     try {
-        const response = await axios.get(
-            `${API_BASE_URL}/buyers`,
-            { headers: { "Content-Type": "application/json"}},         
-        );
+        const response = await axiosInstance.get('/buyers')
         if (!response){
             return {message: "Sorry, unable to fetch buyers"};
         }
         if (response?.status != 200) {
             return { success: false, error: response.statusText}
         }
-        return response.data
+        if (response?.status === 200) {
+            return response.data
+        }
+        
         // console.log(response)
 
     } catch (error) {
@@ -152,10 +154,7 @@ export const getBuyers = async () => {
 
 export const getCoops = async () => {
     try {
-        const response = await axios.get(
-            `${API_BASE_URL}/coops`,
-            { headers: { "Content-Type": "application/json"}},         
-        );
+        const response = await axiosInstance.get('/coops')
         if (!response){
             return {message: "Sorry, unable to fetch coops"};
         }
