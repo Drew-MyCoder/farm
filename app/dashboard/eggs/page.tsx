@@ -36,6 +36,7 @@ export default function EggsPage() {
       setLoading(true);
       const response = await getCoops();  // Ensure getCoops() returns an array
       setEggRecords(Array.isArray(response) ? response : []);  // Ensure it's an array
+      console.log("eggs collection:", response);
     } catch (err) {
       console.error("Error fetching egg records:", err);
       setError("Failed to load egg collection records. Please try again.");

@@ -89,12 +89,14 @@ export default function EggUpdatePage() {
         if (!Array.isArray(mockCoops)) {
           console.error("Error: getCoops() did not return an array", mockCoops);
           setCoops([]);
+          setLoading(false);
           return;
         }
   
         console.log(mockCoops, "this is my coops from database");
   
         setCoops(mockCoops);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching coops:", error)
 
@@ -148,7 +150,7 @@ export default function EggUpdatePage() {
     try {
       const response = await axiosInstance.patch(
         
-        '/coops/${formData.coopId}',
+        `/coops/${Number(formData.coopId)}`,
         {
           coopId: formData.coopId,
           collection_date: formData.collection_date,
@@ -260,11 +262,14 @@ export default function EggUpdatePage() {
                         <span className="ml-2">Loading coops...</span>
                       </div>
                     ) : coops.length > 0 ? (
-                      coops.map((coop) => (
+                      
+                      coops.map((coop) => {
+                        console.log("Mapping coop: ", coop);
+                        return (
                         <SelectItem key={coop.id} value={String(coop.id)}>
                           {coop.coop_name}
                         </SelectItem>
-                      ))
+                      )})
                     ) : (
                       <div className="py-2 text-center">No coops available</div>
                     )}

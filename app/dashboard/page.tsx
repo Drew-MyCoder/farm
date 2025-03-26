@@ -75,7 +75,7 @@ const DashboardPage: React.FC = () => {
         const mockEggRecords: EggRecord[] = await getCoops();
             if(mockEggRecords) {
             setData(mockEggRecords);
-            console.log(mockEggRecords, ' this is my response from database')
+            console.log(mockEggRecords, ' this is my egg response from database')
           }
          
 
