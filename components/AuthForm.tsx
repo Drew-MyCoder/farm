@@ -46,7 +46,7 @@ const AuthForm = <T extends FieldValues>({
     const handleSubmit: SubmitHandler<T> = async (data) => {
     try {
         const result = await onSubmit(data);
-        console.log(data)
+        // console.log(data)
         // If we get here and have a result (no redirect happened)
         if (result) {
             if(result.success) {

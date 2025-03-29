@@ -105,7 +105,7 @@ export const signUp = async (params: AuthCredentials) => {
             return { success: false, error: response.statusText}
         }
 
-        console.log(response)
+        // console.log(response)
 
         if (response.status === 200) {
             redirect('/sign-in');

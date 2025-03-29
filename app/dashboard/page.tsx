@@ -322,13 +322,13 @@ const DashboardPage: React.FC = () => {
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
-          <div className="flex-1">
+          {/* <div className="flex-1"> */}
             <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
-          </div>
+          {/* </div> */}
           <div className="flex items-center gap-4">
           {showUserName && userName && (
-          <div className="text-base text-center capitalize font-medium bg-muted py-1 px-3 rounded-full">
-          Welcome {userName}
+          <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+           {userName}
         </div>
         
         )}
