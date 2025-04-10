@@ -232,7 +232,15 @@ const DashboardPage: React.FC = () => {
       </aside>
 
       {/* Mobile navigation */}
-      <div className="md:hidden">
+      
+
+      <div className="flex flex-1 flex-col">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
+          {/* <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsMobileNavOpen(true)}>
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
+          </Button> */}
+          <div className="md:hidden">
         <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="md:hidden">
@@ -312,16 +320,9 @@ const DashboardPage: React.FC = () => {
           </SheetContent>
         </Sheet>
       </div>
-
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-          {/* <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsMobileNavOpen(true)}>
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button> */}
-          {/* <div className="flex-1"> */}
+          <div className="flex-1">
             <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
-          {/* </div> */}
+          </div>
           <div className="flex items-center gap-4">
           {showUserName && userName && (
           <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
