@@ -1,9 +1,8 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import {
   Bell,
-  CheckCircle2,
   Clock,
   Egg,
   Home,
@@ -12,7 +11,6 @@ import {
   Menu,
   Settings,
   Users,
-  XCircle,
   Package,
   Syringe,
 
@@ -26,19 +24,27 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { GetUsername } from "@/lib/utils"
 import { getBuyers, getCoops } from "@/lib/actions/auth"
 import { Skeleton } from "@/components/ui/skeleton"
+import RecentOrdersCard from "@/components/RecentOrders"
+import CoopPerformanceCard from "@/components/CoopPerformance"
 // import { format } from "date-fns"
 
 
 
 interface EggRecord {
-  id: string
-  coopId: string
-  coop_name: string
-  collection_date: string
-  egg_count: number
-  broken_eggs: number
-  total_feed: number
-  notes: string
+  id: number;
+    parent_id: number | null;
+    status: string;
+    total_dead_fowls: number;
+    total_fowls: number;
+    coop_name: string;
+    total_feed: number;
+    created_at: string;
+    updated_at: string;
+    egg_count: number;
+    efficiency: number;
+    collection_date: string;
+    broken_eggs: number;
+    notes: string;
   
 }
 
@@ -55,6 +61,7 @@ interface OrderData {
 }
 
 
+
 const DashboardPage: React.FC = () => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -63,10 +70,12 @@ const DashboardPage: React.FC = () => {
   const [eggRecords, setEggRecords] = useState<EggRecord[]>([])
   const userName = GetUsername();
   const [orderData, setOrderData] = useState<OrderData[]>([]);
-  const [searchQuery] = useState("")
-  const [statusFilter] = useState<string>("all")
+  // const [searchQuery] = useState("")
+  // const [statusFilter] = useState<string>("all")
 
   const showUserName = true;
+
+  const dataRef = useRef(data);
 
   useEffect(() => {
     async function fetchEggRecords() {
@@ -74,8 +83,9 @@ const DashboardPage: React.FC = () => {
         setLoading(true)
         const mockEggRecords: EggRecord[] = await getCoops();
             if(mockEggRecords) {
-            setData(mockEggRecords);
-            console.log(mockEggRecords, ' this is my egg response from database')
+              setData(mockEggRecords); // Set the data in state
+              dataRef.current = mockEggRecords; // Also store it in the ref for later use
+              console.log(mockEggRecords, ' this is my egg response from database')
           }
          
 
@@ -111,16 +121,16 @@ const DashboardPage: React.FC = () => {
   //   return orderData.filter((order) => order.status_of_delivery === "pending").length
   // }
 
-  const filteredOrders = orderData.filter((order) => {
-    // Search filter
-    const matchesSearch =
-    order.name.toLowerCase().includes(searchQuery.toLowerCase()) || order.id.toString().includes(searchQuery)
+  // const filteredOrders = orderData.filter((order) => {
+  //   // Search filter
+  //   const matchesSearch =
+  //   order.name.toLowerCase().includes(searchQuery.toLowerCase()) || order.id.toString().includes(searchQuery)
 
-    // Status filter
-    const matchesStatus = statusFilter === "all"  
+  //   // Status filter
+  //   const matchesStatus = statusFilter === "all"  
 
-    return matchesSearch && matchesStatus
-  })
+  //   return matchesSearch && matchesStatus
+  // })
 
   const totalEggsToday = eggRecords?.length
     ? eggRecords
@@ -147,20 +157,7 @@ const DashboardPage: React.FC = () => {
   //   }
   // }
 
-  const getStatusStyle = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return { bg: "bg-yellow-500/10", icon: <Clock className="h-5 w-5 text-yellow-500" />, text: "text-yellow-500" };
-      case "processing":
-        return { bg: "bg-blue-500/10", icon: <Clock className="h-5 w-5 text-blue-500" />, text: "text-blue-500" };
-      case "delivered":
-        return { bg: "bg-green-500/10", icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, text: "text-green-500" };
-      case "cancelled":
-        return { bg: "bg-red-500/10", icon: <XCircle className="h-5 w-5 text-red-500" />, text: "text-red-500" };
-      default:
-        return { bg: "bg-gray-500/10", icon: <Clock className="h-5 w-5 text-gray-500" />, text: "text-gray-500" };
-    }
-  };
+ 
 
   // const formatDate = (dateString: string) => {
   //   const date = new Date(dateString)
@@ -318,10 +315,10 @@ const DashboardPage: React.FC = () => {
 
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
-          <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsMobileNavOpen(true)}>
+          {/* <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsMobileNavOpen(true)}>
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
-          </Button>
+          </Button> */}
           {/* <div className="flex-1"> */}
             <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
           {/* </div> */}
@@ -422,7 +419,7 @@ const DashboardPage: React.FC = () => {
             </Card>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-<Card defaultValue="all" className="lg:col-span-4">
+{/* <Card defaultValue="all" className="lg:col-span-4">
       <CardHeader>
         <CardTitle>Recent Orders</CardTitle>
         <CardDescription>Latest customer orders and their status</CardDescription>
@@ -444,7 +441,8 @@ const DashboardPage: React.FC = () => {
           })}
         </div>
       </CardContent>
-    </Card>
+    </Card> */}
+        <RecentOrdersCard orders={orderData} />
 
             <Card className="lg:col-span-3">
               <CardHeader>
@@ -536,7 +534,7 @@ const DashboardPage: React.FC = () => {
             </Card>
             
 
-          <Card>
+          {/* <Card>
                 <CardHeader>
                   <CardTitle>Coop Performance</CardTitle>
                   <CardDescription>Egg production by coop</CardDescription>
@@ -565,7 +563,9 @@ const DashboardPage: React.FC = () => {
                     </Link>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
+
+              <CoopPerformanceCard allCoopData={eggRecords} />
           </div>
         </main>
       </div>
