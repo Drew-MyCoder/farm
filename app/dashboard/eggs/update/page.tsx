@@ -17,9 +17,10 @@ import { DashboardHeader } from "@/app/dashboard/components/dashboard-header"
 import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn, GetUserId,  } from "@/lib/utils"
+import { cn  } from "@/lib/utils"
 import { getCoops } from "@/lib/actions/auth"
 import axiosInstance from "@/axiosInstance"
+import { useAuth } from "@/components/AuthProvider"
 
 
 interface Coop {
@@ -43,6 +44,7 @@ interface EggUpdateData {
   crates_collected: number
   egg_count: number
   efficiency: number
+  location_id: string
 }
 
 export default function EggUpdatePage() {
@@ -50,6 +52,7 @@ export default function EggUpdatePage() {
   const [coops, setCoops] = useState<Coop[]>([])
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // const [error, setError] = useState("")
   const [formData, setFormData] = useState<EggUpdateData>({
     coopId: "",
     collection_date: new Date(),
@@ -65,10 +68,13 @@ export default function EggUpdatePage() {
     coop_name: "",
     user_id: 0,
     efficiency: 0,
+    location_id: "",
   })
-  const userId = GetUserId();
 
- 
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  const locationId = user?.location_id;
 
 
 
@@ -81,31 +87,60 @@ export default function EggUpdatePage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    async function fetchCoops() {
-      try {
+    // async function fetchCoops() {
+    //   try {
 
-        setLoading(true);
-        const mockCoops: Coop[] = await getCoops();
-        if (!Array.isArray(mockCoops)) {
-          console.error("Error: getCoops() did not return an array", mockCoops);
-          setCoops([]);
-          setLoading(false);
-          return;
-        }
+    //     setLoading(true);
+    //     const mockCoops = await getCoops();
+    //     if (!Array.isArray(mockCoops)) {
+    //       console.error("Error: getCoops() did not return an array", mockCoops);
+    //       setCoops([]);
+    //       setLoading(false);
+    //       return;
+    //     }
   
-        console.log(mockCoops, "this is my coops from database");
+    //     console.log(mockCoops, "this is my coops from database");
   
-        setCoops(mockCoops);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching coops:", error)
+    //     setCoops(mockCoops);
+    //     setLoading(false);
+    //   } catch (error) {
+    //     console.error("Error fetching coops:", error)
 
-        toast.error('Failed to load coops. Please try again.', {
-          description: 'Please try again.',
-        });
-        setLoading(false)
-      }
+    //     toast.error('Failed to load coops. Please try again.', {
+    //       description: 'Please try again.',
+    //     });
+    //     setLoading(false)
+    //   }
+    // }
+    const fetchCoops = async() => {
+  try {
+    setLoading(true);
+    const response = await getCoops();
+    
+    // Check if response is directly an array (your current API format)
+    if (Array.isArray(response)) {
+      setCoops(response);
+      console.log(response, 'this is my coops data from database');
+    } 
+    // Check if response has success property and data array (alternative API format)
+    else if (response && response.success === true && Array.isArray(response.data)) {
+      setCoops(response.data);
+      console.log(response.data, 'this is my coops data from database');
+    } 
+    // Handle unexpected response format
+    else {
+      console.error('Invalid response format:', response);
+      setCoops([]); // Set empty array as fallback
+      // setError("Unexpected response format from server");
     }
+  } catch (error) {
+    console.error('Error fetching coops:', error);
+    setCoops([]); // Set empty array on error
+    // setError("Failed to load coops. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
     fetchCoops()
   }, [])
@@ -165,6 +200,7 @@ export default function EggUpdatePage() {
           total_fowls: formData.total_fowls,
           coop_name: formData.coop_name,
           user_id: userId,
+          location_id: locationId,
           efficiency: calculateEfficiency(formData.egg_count, formData.broken_eggs)
         }
       );
@@ -183,7 +219,7 @@ export default function EggUpdatePage() {
 
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      
 
       toast.success("Egg collection data saved successfully");
 
@@ -204,6 +240,7 @@ export default function EggUpdatePage() {
         coop_name: "",
         user_id: 0,
         efficiency: 0,
+        location_id: "",
       })
 
       // Optionally redirect to a dashboard or egg records page

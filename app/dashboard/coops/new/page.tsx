@@ -80,17 +80,9 @@ export default function NewCoopPage() {
     setIsSubmitting(true)
 
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch("/api/coops", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(formData),
-      // })
       const response = await axiosInstance.post(
         
-        '/coopscoop',
+        '/coops/',
         {
           total_feed: formData.total_feed,
           status: "active",

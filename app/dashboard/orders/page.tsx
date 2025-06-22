@@ -24,11 +24,12 @@ import { DashboardShell } from "@/app/dashboard/components/dashboard-shell"
 import { format } from "date-fns"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { cn, GetUsername } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { getBuyers } from "@/lib/actions/auth"
 import axiosInstance from "@/axiosInstance"
 import { toast } from "sonner"
+import { useAuth } from "@/components/AuthProvider"
 
 
 interface Order {
@@ -41,6 +42,7 @@ interface Order {
   created_at: string
   updated_at: string
   by: string
+  location_id: string
 }
 
 export default function OrdersPage() {
@@ -49,12 +51,20 @@ export default function OrdersPage() {
 
   useEffect(() => {
     const fetchBuyers = async() => {
+    try {
       const response = await getBuyers();
-      if(response && response.success !== false){
-        setData(response);
-        console.log(response, ' this is my response from database')
+      if(response && response.success === true && Array.isArray(response.data)){
+        setData(response.data);
+        console.log(response.data, ' this is my response from database')
+      } else {
+        console.error('Invalid response format:', response);
+        setData([]); // Set empty array as fallback
       }
-    }; 
+    } catch (error) {
+      console.error('Error fetching buyers:', error);
+      setData([]); // Set empty array on error
+    }
+  }; 
     
     fetchBuyers();
   }, [])
@@ -70,12 +80,18 @@ export default function OrdersPage() {
     amount: 0,
     status_of_delivery: "pending",
     by: "",
+    location_id: "",
   })
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState({ type: '', message: ''});
   const router = useRouter();
-  const userName = GetUsername();
-  console.log('this is the new user name in oder', userName, submitting, status);
+  
+  const { user } = useAuth();
+  const userName = user?.name;
+  const locationId = user?.location_id;
+  
+  console.log(locationId, 'this is the locationid')
+  console.log('this is the new user name in oder', userName, locationId, submitting, status);
   
   
 
@@ -127,18 +143,20 @@ export default function OrdersPage() {
       amount: 0,
       status_of_delivery: "pending",
       by: "",
+      location_id: "",
     })
     
     try {
       const response = await axiosInstance.post(
-        '/buyers/buyer',
+        '/buyers',
         {
           name: newOrder.name,
-          date_of_delivery: newOrder.date_of_delivery,
+          date_of_delivery: new Date(newOrder.date_of_delivery).toISOString().split('T')[0],
           crates_desired: newOrder.crates_desired,
           amount: newOrder.amount,
           status_of_delivery: newOrder.status_of_delivery,
           by: userName,
+          location_id: locationId,
         }
       );
       // console.log('full api order response', response);

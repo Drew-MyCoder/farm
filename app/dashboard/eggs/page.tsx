@@ -31,20 +31,35 @@ export default function EggsPage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    async function fetchEggRecords() {
-      try {
-      setLoading(true);
-      const response = await getCoops();  // Ensure getCoops() returns an array
-      setEggRecords(Array.isArray(response) ? response : []);  // Ensure it's an array
-      console.log("eggs collection:", response);
-    } catch (err) {
-      console.error("Error fetching egg records:", err);
-      setError("Failed to load egg collection records. Please try again.");
-      setEggRecords([]); // Set to empty array on error
-    } finally {
-      setLoading(false);
+    const fetchEggRecords = async() => {
+  try {
+    setLoading(true);
+    const response = await getCoops();
+    
+    // Check if response is directly an array (your current API format)
+    if (Array.isArray(response)) {
+      setEggRecords(response);
+      console.log(response, 'this is my coops data from database');
+    } 
+    // Check if response has success property and data array (alternative API format)
+    else if (response && response.success === true && Array.isArray(response.data)) {
+      setEggRecords(response.data);
+      console.log(response.data, 'this is my coops data from database');
+    } 
+    // Handle unexpected response format
+    else {
+      console.error('Invalid response format:', response);
+      setEggRecords([]); // Set empty array as fallback
+      setError("Unexpected response format from server");
     }
+  } catch (error) {
+    console.error('Error fetching coops:', error);
+    setEggRecords([]); // Set empty array on error
+    setError("Failed to load coops. Please try again.");
+  } finally {
+    setLoading(false);
   }
+};
 
     fetchEggRecords()
   }, [])

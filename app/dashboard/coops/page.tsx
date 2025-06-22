@@ -39,30 +39,55 @@ export default function CoopsPage() {
   const [coopToDelete, setCoopToDelete] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchCoops() {
-      try {
-        setLoading(true)
+    // async function fetchCoops() {
+    //   try {
+    //     setLoading(true)
 
-        const response = await getCoops();
+    //     const response = await getCoops();
 
-        // Ensure response is an array, default to an empty array if not
-        const mockCoops: Coop[] = Array.isArray(response) ? response : [];
+    //     console.log('this is my coop', response);
+
+    //     // Ensure response is an array, default to an empty array if not
+    //     const mockCoops: Coop[] = Array.isArray(response) ? response : [];
   
-        setCoops(mockCoops);
-  
-        // Simulate API call
-        setTimeout(() => {
-          setCoops(mockCoops);
-          setLoading(false);
-        }, 1000);
+    //     setCoops(mockCoops);
         
-      } catch (err) {
-        console.error("Error fetching coops:", err);
-        setError("Failed to load coops. Please try again.");
-        setCoops([]); // Ensure it's an empty array on error
-        setLoading(false);
-      }
+    //   } catch (err) {
+    //     console.error("Error fetching coops:", err);
+    //     setError("Failed to load coops. Please try again.");
+    //     setCoops([]); // Ensure it's an empty array on error
+    //     setLoading(false);
+    //   }
+    // }
+    const fetchCoops = async() => {
+  try {
+    setLoading(true);
+    const response = await getCoops();
+    
+    // Check if response is directly an array (your current API format)
+    if (Array.isArray(response)) {
+      setCoops(response);
+      console.log(response, 'this is my coops data from database');
+    } 
+    // Check if response has success property and data array (alternative API format)
+    else if (response && response.success === true && Array.isArray(response.data)) {
+      setCoops(response.data);
+      console.log(response.data, 'this is my coops data from database');
+    } 
+    // Handle unexpected response format
+    else {
+      console.error('Invalid response format:', response);
+      setCoops([]); // Set empty array as fallback
+      setError("Unexpected response format from server");
     }
+  } catch (error) {
+    console.error('Error fetching coops:', error);
+    setCoops([]); // Set empty array on error
+    setError("Failed to load coops. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
     fetchCoops()
   }, [])
@@ -73,9 +98,6 @@ export default function CoopsPage() {
       // await fetch(`/api/coops/${id}`, {
       //   method: "DELETE",
       // })
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
 
       // Update local state
       setCoops(coops.filter((coop) => coop.id !== id))

@@ -21,11 +21,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { GetUsername } from "@/lib/utils"
 import { getBuyers, getCoops } from "@/lib/actions/auth"
 import { Skeleton } from "@/components/ui/skeleton"
 import RecentOrdersCard from "@/components/RecentOrders"
 import CoopPerformanceCard from "@/components/CoopPerformance"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { useAuth } from "@/components/AuthProvider"
 // import { format } from "date-fns"
 
 
@@ -68,12 +69,16 @@ const DashboardPage: React.FC = () => {
   const [data, setData] = useState<EggRecord[]>([]); 
   const [error, setError] = useState("")
   const [eggRecords, setEggRecords] = useState<EggRecord[]>([])
-  const userName = GetUsername();
+  const { user } = useAuth();
+  const userName = user?.name
+  const locationName = user?.location_name;
   const [orderData, setOrderData] = useState<OrderData[]>([]);
   // const [searchQuery] = useState("")
   // const [statusFilter] = useState<string>("all")
 
   const showUserName = true;
+
+  const showLocationName = true;
 
   const dataRef = useRef(data);
 
@@ -81,19 +86,33 @@ const DashboardPage: React.FC = () => {
     async function fetchEggRecords() {
       try {
         setLoading(true)
-        const mockEggRecords: EggRecord[] = await getCoops();
-            if(mockEggRecords) {
-              setData(mockEggRecords); // Set the data in state
-              dataRef.current = mockEggRecords; // Also store it in the ref for later use
-              console.log(mockEggRecords, ' this is my egg response from database')
+        const res = await getCoops();
+
+        console.log('this is egg records:', res);
+
+          if (res.success && Array.isArray(res.data)) {
+            setData(res.data);
+            dataRef.current = res.data;
+            setTimeout(() => {
+              setEggRecords(res.data);
+              setLoading(false);
+            }, 1);
+          } else {
+            throw new Error("Failed to load egg records");
           }
+        // const mockEggRecords: EggRecord[] = await getCoops();
+        //     if(mockEggRecords) {
+        //       setData(mockEggRecords); // Set the data in state
+        //       dataRef.current = mockEggRecords; // Also store it in the ref for later use
+        //       console.log(mockEggRecords, ' this is my egg response from database')
+        //   }
          
 
         // Simulate API call
-        setTimeout(() => {
-          setEggRecords(mockEggRecords)
-          setLoading(false)
-        }, 1000)
+        // setTimeout(() => {
+        //   setEggRecords(mockEggRecords)
+        //   setLoading(false)
+        // }, 1000)
       } catch (error) {
         console.error("Error fetching egg records:", error)
         setError("Failed to load egg collection records. Please try again.")
@@ -107,11 +126,20 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const fetchBuyers = async() => {
+      // const response = await getBuyers();
+      // if(response && response.success !== false){
+      //   setOrderData(response);
+      //   console.log(response, ' this is my buyers response from database')
+      // }
       const response = await getBuyers();
-      if(response && response.success !== false){
-        setOrderData(response);
-        console.log(response, ' this is my buyers response from database')
-      }
+
+        if (response.success && Array.isArray(response.data)) {
+          setOrderData(response.data);
+          console.log(response.data, 'this is my buyers response from database');
+        } else {
+          console.error("Failed to fetch buyers", response.error);
+        }
+
     }; 
     
     fetchBuyers();
@@ -165,6 +193,7 @@ const DashboardPage: React.FC = () => {
   // }
 
   return (
+    <ProtectedRoute fallback={<div>Checking permissions...</div>} requiredRole="feeder">
     <div className="flex min-h-screen bg-muted/40">
       {/* Sidebar for desktop */}
       <aside className="hidden w-64 border-r bg-background md:block">
@@ -321,7 +350,10 @@ const DashboardPage: React.FC = () => {
         </Sheet>
       </div>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
+            
+              {showLocationName && locationName && (
+                <h1 className="text-lg font-semibold md:text-xl">{locationName} Dashboard</h1>
+              )}
           </div>
           <div className="flex items-center gap-4">
           {showUserName && userName && (
@@ -571,6 +603,7 @@ const DashboardPage: React.FC = () => {
         </main>
       </div>
     </div>
+ </ProtectedRoute>
   )
 }
 

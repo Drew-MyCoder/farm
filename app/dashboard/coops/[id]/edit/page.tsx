@@ -32,10 +32,6 @@ export default function EditCoopPage() {
     async function fetchCoop() {
       try {
         setLoading(true)
-        // In a real app, this would be an API call
-        // const response = await fetch(`/api/coops/${id}`)
-
-        // For demo purposes, create mock data
         setTimeout(() => {
           const mockCoop = {
             id,
