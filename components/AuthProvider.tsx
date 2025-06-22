@@ -27,12 +27,12 @@ const getUserDataFromCookies = (): User => {
     const userDataCookie = getCookie('user_data');
     if (userDataCookie) {
       const userData = JSON.parse(userDataCookie as string);
-      console.log('User data loaded from cookies:', userData);
+      // console.log('User data loaded from cookies:', userData);
       return userData;
     }
     return null;
   } catch (error) {
-    console.error('Error parsing user data from cookies:', error);
+    // console.error('Error parsing user data from cookies:', error);
     return null;
   }
 };
@@ -54,10 +54,10 @@ const clearAllAuthData = () => {
       localStorage.removeItem('userRole');
     }
     
-    console.log('All auth data cleared successfully');
+    // console.log('All auth data cleared successfully');
     return true;
   } catch (error) {
-    console.error('Error clearing auth data:', error);
+    // console.error('Error clearing auth data:', error);
     return false;
   }
 };
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     const userData = getUserDataFromCookies();
     if (userData) {
-      console.log('AuthProvider: User data found:', userData);
+      // console.log('AuthProvider: User data found:', userData);
       setUser(userData);
     } else {
       console.log('AuthProvider: No user data found in cookies');
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Custom setUser function that also updates cookies
   const updateUser = (newUser: User) => {
-    console.log('AuthProvider: Updating user data:', newUser);
+    // console.log('AuthProvider: Updating user data:', newUser);
     setUser(newUser);
     
     // If user is being set to null, clear cookies
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-    console.log('AuthProvider: Logging out user');
+    // console.log('AuthProvider: Logging out user');
     clearAllAuthData();
     setUser(null);
     
@@ -104,14 +104,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Debug logging
-  useEffect(() => {
-    console.log('AuthProvider: User state changed:', {
-      user,
-      isLoading,
-      hasLocationId: user?.location_id !== null,
-      hasLocationName: user?.location_name !== null
-    });
-  }, [user, isLoading]);
+  // useEffect(() => {
+  //   console.log('AuthProvider: User state changed:', {
+  //     user,
+  //     isLoading,
+  //     hasLocationId: user?.location_id !== null,
+  //     hasLocationName: user?.location_name !== null
+  //   });
+  // }, [user, isLoading]);
 
   return (
     <AuthContext.Provider value={{ user, setUser: updateUser, logout, isLoading }}>

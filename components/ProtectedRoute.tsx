@@ -20,25 +20,25 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    console.log('ProtectedRoute Debug:', { 
-      // loading, 
-      user: user ? { 
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        location_id: user.location_id,
-        location_name: user.location_name
-      } : null, 
-      requiredRole,
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
-    });
+    // console.log('ProtectedRoute Debug:', { 
+    //   // loading, 
+    //   user: user ? { 
+    //     id: user.id,
+    //     name: user.name,
+    //     role: user.role,
+    //     location_id: user.location_id,
+    //     location_name: user.location_name
+    //   } : null, 
+    //   requiredRole,
+    //   pathname: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
+    // });
 
     // Don't do anything while auth is still loading
     // if (loading) return;
 
     // If no user is authenticated, redirect to sign-in
     if (!user) {
-      console.log('No user found, redirecting to sign-in');
+      // console.log('No user found, redirecting to sign-in');
       setIsRedirecting(true);
       router.push('/sign-in');
       return;
@@ -46,7 +46,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // If user is authenticated but doesn't have required role
     if (requiredRole && user.role !== requiredRole) {
-      console.log(`User role ${user.role} doesn't match required role ${requiredRole}`);
+      // console.log(`User role ${user.role} doesn't match required role ${requiredRole}`);
       setIsRedirecting(true);
       
       // Redirect based on user role
@@ -60,7 +60,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // Reset redirecting state if we reach here
     setIsRedirecting(false);
-    console.log('User authenticated and authorized');
+    // console.log('User authenticated and authorized');
   }, [user, requiredRole, router]);
 
   // Show loading while auth is loading or while redirecting

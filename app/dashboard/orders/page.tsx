@@ -55,13 +55,13 @@ export default function OrdersPage() {
       const response = await getBuyers();
       if(response && response.success === true && Array.isArray(response.data)){
         setData(response.data);
-        console.log(response.data, ' this is my response from database')
+        // console.log(response.data, ' this is my response from database')
       } else {
-        console.error('Invalid response format:', response);
+        // console.error('Invalid response format:', response);
         setData([]); // Set empty array as fallback
       }
     } catch (error) {
-      console.error('Error fetching buyers:', error);
+      // console.error('Error fetching buyers:', error);
       setData([]); // Set empty array on error
     }
   }; 
@@ -90,8 +90,8 @@ export default function OrdersPage() {
   const userName = user?.name;
   const locationId = user?.location_id;
   
-  console.log(locationId, 'this is the locationid')
-  console.log('this is the new user name in oder', userName, locationId, submitting, status);
+  // console.log(locationId, 'this is the locationid')
+  console.log('this is the new user name in oder', submitting, status);
   
   
 
@@ -172,7 +172,7 @@ export default function OrdersPage() {
       router.push('/dashboard/orders')
     } catch (error: unknown) {
       const errorMessage = 'Failed to create order. Please try again.'
-      console.log(error);
+      // console.log(error);
 
       axiosInstance.interceptors.response.use(
         (response) => response,

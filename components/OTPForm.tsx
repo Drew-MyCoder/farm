@@ -67,7 +67,7 @@ const storeAuthData = (authData: VerifyResponse) => {
     // console.log('Auth data stored successfully:', userData);
     return userData;
   } catch (error) {
-    console.error('Error storing auth data:', error);
+    // console.error('Error storing auth data:', error);
     return null;
   }
 };
@@ -91,7 +91,7 @@ const clearAuthData = () => {
     console.log('Auth data cleared successfully');
     return true;
   } catch (error) {
-    console.error('Error clearing auth data:', error);
+    // console.error('Error clearing auth data:', error);
     return false;
   }
 };
@@ -158,7 +158,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     }
 
     try {
-      console.log('Submitting OTP verification...');
+      // console.log('Submitting OTP verification...');
       
       const response = await axiosInstance.post('/api/v1/verify', {
         username: formData.firstname + ' ' + formData.lastname,
@@ -237,7 +237,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
       }, 100);
     
     } catch (error: unknown) {
-      console.error('OTP verification error:', error);
+      // console.error('OTP verification error:', error);
       
       let errorMessage = 'Failed to verify OTP. Please try again.';
       

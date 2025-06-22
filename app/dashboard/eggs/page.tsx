@@ -39,21 +39,21 @@ export default function EggsPage() {
     // Check if response is directly an array (your current API format)
     if (Array.isArray(response)) {
       setEggRecords(response);
-      console.log(response, 'this is my coops data from database');
+      // console.log(response, 'this is my coops data from database');
     } 
     // Check if response has success property and data array (alternative API format)
     else if (response && response.success === true && Array.isArray(response.data)) {
       setEggRecords(response.data);
-      console.log(response.data, 'this is my coops data from database');
+      // console.log(response.data, 'this is my coops data from database');
     } 
     // Handle unexpected response format
     else {
-      console.error('Invalid response format:', response);
+      // console.error('Invalid response format:', response);
       setEggRecords([]); // Set empty array as fallback
       setError("Unexpected response format from server");
     }
   } catch (error) {
-    console.error('Error fetching coops:', error);
+    // console.error('Error fetching coops:', error);
     setEggRecords([]); // Set empty array on error
     setError("Failed to load coops. Please try again.");
   } finally {
