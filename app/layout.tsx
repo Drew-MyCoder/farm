@@ -1,6 +1,8 @@
 import type React from "react"
 import localFont from "next/font/local";
 import "./globals.css"
+import { AuthProvider } from "@/components/AuthProvider";
+import { Toaster } from "sonner";
 
 
 const ibmPlexSans = localFont({
@@ -31,8 +33,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${ibmPlexSans.className} ${bebasNeue.variable} antialiased`}>{children}
-      {/* <Toaster /> */}
+      <body className={`${ibmPlexSans.className} ${bebasNeue.variable} antialiased`}>
+        <AuthProvider>
+        {children}
+        </AuthProvider>
+      <Toaster />
       </body>
     </html>
   )
