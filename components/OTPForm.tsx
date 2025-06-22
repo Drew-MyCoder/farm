@@ -7,14 +7,11 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRouter } from 'next/navigation';
-import { setCookie } from 'cookies-next';
+import { setCookie, deleteCookie } from 'cookies-next';
 import axiosInstance from '@/axiosInstance';
 import { toast } from 'sonner';
-
-
-
-
-
+import { useAuth } from '@/components/AuthProvider';
+import { AxiosError } from 'axios';
 
 // Define the OTP data type
 type OtpData = {
@@ -23,9 +20,85 @@ type OtpData = {
   email?: string;
 };
 
-// Accept serverOtpData as a prop
+// Define the API response type
+type VerifyResponse = {
+  roles: string;
+  access_token: string;
+  user: string;
+  user_id: number;
+  location_id: number | null;
+  location_name: string | null;
+};
+
+// Cookie configuration
+const COOKIE_CONFIG = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  maxAge: 60 * 60 * 24, // 24 hours
+  path: '/',
+};
+
+const USER_DATA_COOKIE_CONFIG = {
+  httpOnly: false, // User data can be accessed by client
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  maxAge: 60 * 60 * 24, // 24 hours
+  path: '/',
+};
+
+// Utility functions for auth data management
+const storeAuthData = (authData: VerifyResponse) => {
+  try {
+    // Store JWT token in httpOnly cookie (most secure)
+    setCookie('auth_token', authData.access_token, COOKIE_CONFIG);
+    
+    // Store non-sensitive user data in accessible cookie for UI
+    const userData = {
+      id: authData.user_id,
+      name: authData.user,
+      role: authData.roles,
+      location_id: authData.location_id,
+      location_name: authData.location_name,
+    };
+    
+    setCookie('user_data', JSON.stringify(userData), USER_DATA_COOKIE_CONFIG);
+    
+    // console.log('Auth data stored successfully:', userData);
+    return userData;
+  } catch (error) {
+    console.error('Error storing auth data:', error);
+    return null;
+  }
+};
+
+const clearAuthData = () => {
+  try {
+    deleteCookie('auth_token', { path: '/' });
+    deleteCookie('user_data', { path: '/' });
+    
+    // Clear any remaining localStorage data for cleanup
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('otpData');
+      localStorage.removeItem('authUser');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('locationId');
+      localStorage.removeItem('locationName');
+      localStorage.removeItem('userRole');
+    }
+    
+    console.log('Auth data cleared successfully');
+    return true;
+  } catch (error) {
+    console.error('Error clearing auth data:', error);
+    return false;
+  }
+};
+
 const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
   const router = useRouter();
+  const { setUser } = useAuth();
   
   // State to store OTP data
   const [userData, setUserData] = useState<OtpData | null>(null);
@@ -39,43 +112,16 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
-  // Initialize form with data from serverOtpData or localStorage
+  // Initialize form with data from serverOtpData
   useEffect(() => {
-    // First check if server provided the data
     if (serverOtpData) {
       setUserData(serverOtpData);
-    //   if (serverOtpData.user) {
-    //     setFormData(prev => ({ ...prev, username: serverOtpData.user }));
-    //   }
-    } else {
-      // As a fallback, try to get the data from localStorage
-      try {
-        const storedOtpData = localStorage.getItem('otpData');
-        if (storedOtpData) {
-          const parsedData = JSON.parse(storedOtpData);
-          setUserData(parsedData);
-          if (parsedData.user) {
-            setFormData(prev => ({ ...prev, username: parsedData.user }));
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing OTP data from localStorage:', e);
-      }
+      // console.log('Server OTP data received:', serverOtpData);
     }
     
-    // Store server data in localStorage for persistence
-    if (serverOtpData) {
-      localStorage.setItem('otpData', JSON.stringify(serverOtpData));
-    }
-    
-    // Validate userData
-    if (userData && (!userData.message || !userData.email)) {
-      setStatus({ 
-        type: 'warning', 
-        message: 'Some verification data might be missing. Please ensure you received the correct OTP.' 
-      });
-    }
-  }, [serverOtpData, userData]);
+    // Clear any existing auth data when starting OTP verification
+    clearAuthData();
+  }, [serverOtpData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -94,13 +140,13 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
 
     // Validation
     if (!formData.firstname.trim()) {
-      setStatus({ type: 'error', message: 'firstname is required' });
+      setStatus({ type: 'error', message: 'Firstname is required' });
       setIsSubmitting(false);
       return;
     }
 
     if (!formData.lastname.trim()) {
-      setStatus({ type: 'error', message: 'lastname is required' });
+      setStatus({ type: 'error', message: 'Lastname is required' });
       setIsSubmitting(false);
       return;
     }
@@ -112,95 +158,110 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     }
 
     try {
-      const response = await axiosInstance.post(
-        '/api/v1/verify',
-        { username: formData.firstname+' '+formData.lastname,
-          otp: formData.otp }
-      )
+      console.log('Submitting OTP verification...');
+      
+      const response = await axiosInstance.post('/api/v1/verify', {
+        username: formData.firstname + ' ' + formData.lastname,
+        otp: formData.otp 
+      });
 
-      if (!response) {
-        throw new Error('Verification failed');
+      // console.log('OTP verification response:', response.data);
+
+      if (!response || response.status !== 200) {
+        throw new Error(response?.statusText || 'Verification failed');
       }
 
-      if (response.status !== 200) {
-        throw new Error(response.statusText || 'Verification failed');
-      }
-
-      const { roles, access_token, user, user_id } = response.data;
+      // Extract data from response
+      const responseData: VerifyResponse = response.data;
+      
+      const { 
+        roles, 
+        access_token, 
+        user, 
+        user_id, 
+        location_id, 
+        location_name 
+      } = responseData;
 
       if (!access_token) {
         throw new Error("No access token received");
       }
 
-      setCookie("token", access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24, // 1 day
-        path: '/',
-      });
+      // console.log('Extracted response data:', {
+      //   roles,
+      //   user,
+      //   user_id,
+      //   location_id,
+      //   location_name
+      // });
 
-      // Store user information in localStorage
-      if (user) {
-        localStorage.setItem("userName", user || formData.firstname);
-      }
-      
-      if (user_id) {
-        localStorage.setItem("userId", user_id);
+      // Use the actual user name from response, fallback to form data if not provided
+      const actualUserName = user || (formData.firstname + ' ' + formData.lastname);
+
+      // Create the complete response object
+      const completeAuthData: VerifyResponse = {
+        roles,
+        access_token,
+        user: actualUserName,
+        user_id,
+        location_id,
+        location_name
+      };
+
+      // Store authentication data securely in cookies
+      const storedUserData = storeAuthData(completeAuthData);
+
+      if (!storedUserData) {
+        throw new Error("Failed to store authentication data");
       }
 
-      // Clear OTP data from localStorage as it's no longer needed
-      localStorage.removeItem('otpData');
+      // console.log('User data stored in cookies:', storedUserData);
+
+      // Update auth context with complete user data
+      setUser(storedUserData);
 
       setStatus({ type: 'success', message: 'OTP verified successfully!' });
-      
-      // Optional: Reset form after successful submission
       setFormData({ firstname: '', lastname: '', otp: '' });
       toast.success("Successfully verified");
       
       // Redirect based on user role
       setTimeout(() => {
+        console.log('Redirecting user with role:', roles);
         if (roles === 'admin') {
           router.push("/admin");
-        } else if (roles === "feeder") {
+        } else if (roles === "feeder" || roles === "manager") {
           router.push("/dashboard");
         } else {
           router.push("/");
         }
-      }, 1); // Brief delay to show success message 
+      }, 100);
     
     } catch (error: unknown) {
-      const errorMessage = 'Failed to verify OTP. Please try again.';
-      console.log(error);
+      console.error('OTP verification error:', error);
       
-      axiosInstance.interceptors.response.use(
-        (response) => response,
-        (error) => {
-          let errorMessage = "An error occurred. Please try again."; // Default error message
+      let errorMessage = 'Failed to verify OTP. Please try again.';
       
-          if (error.response) {
-            // Server responded with a status code
-            const status = error.response.status;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       
-            if (status === 401) {
-              errorMessage = "Invalid OTP or username. Please check and try again.";
-            } else if (status === 404) {
-              errorMessage = "User not found. Please check your username.";
-            } else if (status === 410) {
-              errorMessage = "OTP has expired. Please request a new one.";
-            } else {
-              errorMessage = error.response.data?.message || errorMessage;
-            }
-          } else if (error.request) {
-            // Request was made but no response received
-            errorMessage = "Server not responding. Please check your connection and try again.";
-          }
-      
-          return Promise.reject(new Error(errorMessage)); // Ensure error is propagated
+      // If it's an axios error, get more details
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as AxiosError;
+        if (axiosError.response?.data && typeof axiosError.response.data === 'object') {
+          const data = axiosError.response.data as { message?: string };
+          if (data.message) {
+      errorMessage = data.message;
+    }
+        } else if (axiosError.response?.statusText) {
+          errorMessage = axiosError.response.statusText;
         }
-      );
-      toast.error('Failed to verify otp. Please try again.', {
-        description: error instanceof Error ? error.message : "Failed to verify otp",
+      }
+      
+      toast.error('Failed to verify OTP', {
+        description: errorMessage,
       });
+      
       setStatus({ 
         type: 'error', 
         message: errorMessage 
@@ -211,13 +272,8 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
   };
 
   const handleResendOTP = async () => {
-    if (!formData.firstname.trim()) {
-      setStatus({ type: 'error', message: 'Please enter your firstname to resend OTP' });
-      return;
-    }
-
-    if (!formData.lastname.trim()) {
-      setStatus({ type: 'error', message: 'Please enter your lastname to resend OTP' });
+    if (!formData.firstname.trim() || !formData.lastname.trim()) {
+      setStatus({ type: 'error', message: 'Please enter both firstname and lastname to resend OTP' });
       return;
     }
     
@@ -225,58 +281,48 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
     setStatus({ type: '', message: '' });
     
     try {
-      const response = await axiosInstance.post(
-       '/verify',
-        { username: formData.firstname+' '+formData.lastname },
-      )
+      console.log('Resending OTP...');
       
+      const response = await axiosInstance.post('/verify', {
+        username: formData.firstname + ' ' + formData.lastname
+      });
       
-      // If the server returns new OTP data, update our state
+      console.log('Resend OTP response:', response.data);
+      
       if (response.data?.message || response.data?.email) {
-        setUserData({
-          user: formData.firstname+' '+formData.lastname,
+        const newUserData = {
+          user: formData.firstname + ' ' + formData.lastname,
           message: response.data.message,
           email: response.data.email
-        });
+        };
         
-        // Store updated data in localStorage
-        localStorage.setItem('otpData', JSON.stringify({
-          user: formData.firstname+' '+formData.lastname,
-          message: response.data.message,
-          email: response.data.email
-        }));
+        setUserData(newUserData);
+        console.log('Updated user data after resend:', newUserData);
       }
       
       setStatus({ type: 'success', message: 'New OTP sent successfully!' });
+      toast.success("New OTP sent successfully!");
     } catch (error: unknown) {
-      console.log(error);
-      const errorMessage = 'Failed to resend OTP. Please try again later.';
+      console.error('Resend OTP error:', error);
       
-      axiosInstance.interceptors.response.use(
-        (response) => response,
-        (error) => {
-          let errorMessage = "An error occurred. Please try again."; // Default error message
+      let errorMessage = 'Failed to resend OTP. Please try again later.';
       
-          if (error.response) {
-            const status = error.response.status;
-      
-            if (status === 401) {
-              errorMessage = "Invalid OTP or username. Please check and try again.";
-            } else if (status === 404) {
-              errorMessage = "User not found. Please check your username.";
-            } else if (status === 410) {
-              errorMessage = "OTP has expired. Please request a new one.";
-            }
-          } else if (error.request) {
-            errorMessage = "Server not responding. Please check your connection and try again.";
-          }
-      
-          return Promise.reject(new Error(errorMessage));
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as AxiosError;
+        if (axiosError.response?.data && typeof axiosError.response.data === 'object') {
+          const data = axiosError.response.data as { message?: string };
+          if (data.message) {
+      errorMessage = data.message;
+    }
+        } else if (axiosError.response?.statusText) {
+          errorMessage = axiosError.response.statusText;
         }
-      );
-      
+      }
       
       setStatus({ type: 'error', message: errorMessage });
+      toast.error("Failed to resend OTP", {
+        description: errorMessage,
+      });
     } finally {
       setIsResending(false);
     }
@@ -310,13 +356,11 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {status.message && (
-              <Alert variant={status.type === 'error' ? 'destructive' : status.type === 'warning' ? 'default' : 'default'}>
+              <Alert variant={status.type === 'error' ? 'destructive' : 'default'}>
                 {status.type === 'error' ? (
                   <AlertCircle className="h-4 w-4" />
-                ) : status.type === 'success' ? (
-                  <CheckCircle2 className="h-4 w-4" />
                 ) : (
-                  <AlertCircle className="h-4 w-4" />
+                  <CheckCircle2 className="h-4 w-4" />
                 )}
                 <AlertDescription>{status.message}</AlertDescription>
               </Alert>
@@ -333,7 +377,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
                 value={formData.firstname}
                 onChange={handleChange}
                 placeholder="Enter your firstname"
-                className="w-full"
+                required
               />
             </div>
 
@@ -348,7 +392,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
                 value={formData.lastname}
                 onChange={handleChange}
                 placeholder="Enter your lastname"
-                className="w-full"
+                required
               />
             </div>
 
@@ -360,17 +404,14 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
                 id="otp"
                 name="otp"
                 type="text"
-                inputMode='numeric'
-                autoComplete='one-time-code'
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 value={formData.otp}
                 onChange={handleChange}
                 placeholder="Enter 6-digit OTP"
-                className="w-full mb-4"
                 maxLength={6}
+                required
               />
-              {/* <p className="text-xs text-gray-500 text-center mt-1">
-                Enter the 6-digit code sent to your email
-              </p> */}
             </div>
           </CardContent>
 

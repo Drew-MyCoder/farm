@@ -24,7 +24,7 @@ const CoopPerformanceCard: React.FC<CoopPerformanceCardProps> = ({ allCoopData }
     // Group by collection_date
     const dateMap = new Map();
     sortedData.forEach(item => {
-      const dateStr = new Date(item.collection_date).toISOString().split("T")[0];
+      const dateStr = new Date(item.collection_date);
       if (!dateMap.has(dateStr)) {
         dateMap.set(dateStr, []);
       }
