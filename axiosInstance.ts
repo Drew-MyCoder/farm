@@ -14,9 +14,11 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   };
 }
 
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL
+
 // Create axios instance with default configuration
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: API_URL || 'http://localhost:8000',
   withCredentials: true, // Important for cookies
   timeout: 30000, // 30 seconds timeout
   headers: {
