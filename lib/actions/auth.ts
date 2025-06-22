@@ -1,186 +1,192 @@
 'use server';
 
-
-
 import { redirect } from "next/navigation";
 import { cookies } from 'next/headers';
 import axiosInstance from '@/axiosInstance';
-
-
+import { AxiosError } from "axios";
 
 
 export const signInWithCredentials = async (params: Pick<AuthCredentials,
-    'firstname' | 'lastname' | 'password'>) => {
+    'firstname' | 'lastname' | 'password'>): Promise<AuthResponse> => {
 
         const { firstname, lastname, password } = params;
 
         try {
             const response = await axiosInstance.post(
                 '/api/v1/login',
-                { username: firstname+' '+lastname, 
-                password }
-            )
+                { username: firstname + ' ' + lastname, password }
+            );
             
             if (!response) {
-                return { message: 'sorry unable to connect' }
+                return { success: false, error: 'Sorry, unable to connect' };
             }
 
-            if (response?.status != 200) {
-                return { success: false, error: response.statusText}
-
+            if (response?.status !== 200) {
+                return { success: false, error: response.statusText };
             }
+
             const cookiesStore = await cookies();
-            // Check if OTP is required (API sends OTP data)
-                if (response.data?.message?.includes('verification') || 
+            
+            // Check if OTP is required
+            if (response.data?.message?.includes('verification') || 
                 response.data?.message?.includes('OTP')) {
             
-            // Store OTP data in cookies to be read by the OTP page
+                // Store OTP data in cookies
+                cookiesStore.set('otpData', JSON.stringify({
+                    user: response.data.user,
+                    message: response.data.message,
+                    email: response.data.email
+                }), { 
+                    maxAge: 600, // 10 minutes expiry
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax'
+                });
             
-             cookiesStore.set('otpData', JSON.stringify({
-                user: response.data.user,
-                message: response.data.message,
-                email: response.data.email
-            }), { maxAge: 600 }); // 10 minutes expiry
-            
-            // Redirect to OTP page
-            console.log("redirecting to otp...");
-            return { success: true, redirect: '/otp'};
+                console.log("OTP required, redirecting to OTP page...");
+                return { success: true, redirect: '/otp' };
             }
 
-            // If there's no OTP required, handle normal login success
-    // Store token in cookies
+            // Handle normal login success
+            if (response.data?.access_token) {
+                cookiesStore.set('token', response.data.access_token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 60 * 60 * 24, // 1 day
+                    path: '/',
+                    sameSite: 'lax',
+                });
 
-    if (response.data?.access_token) {
-         cookiesStore.set('token', response.data.access_token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 60 * 60 * 24, // 1 day
-          path: '/',
-        });
-        
-        // Redirect based on user role
-        // if (response.data.roles === 'admin') {
-        //   return redirect('/admin');
-        // } else if (response.data.roles === 'feeder') {
-        //   return redirect('/dashboard');
-        // } else {
-        //   return redirect('/');
-        // }
+                const redirectUrl = response.data.roles === 'admin' ? '/admin' : '/dashboard';
+                return { success: true, redirectUrl };
+            }
 
-        return { success: true, 
-            redirectUrl: response.data.roles === 'admin' ? '/admin' : '/dashboard' };
-      }
-    //   toast.success("Successfully logged up");
-      return response.data
-
+            return { success: true, message: 'Login successful' };
             
-        } catch (error: unknown) {
-            console.error('Login failed', error)
-            // throw error;
-            return { 
-                error: error || 'Login failed. Please try again.' 
-              };
-        };
-}
+        } catch (error) {
+            const axiosError = error as AxiosError;
+
+            console.error('Login failed', axiosError);
+
+            // const errorMessage =
+            //     axiosError.response?.data || 'Login failed. Please try again.';
+
+            return {
+                success: false,
+                error: 'something went wrong',
+            };
+            }
+};
 
 
-export const signUp = async (params: AuthCredentials) => {
+export const signUp = async (params: AuthCredentials): Promise<AuthResponse> => {
     const { firstname, lastname, email, password } = params;
 
     try {
-        const response = await axiosInstance.post(
-            '/api/v1/auth/register', {
-                email, 
-                username: firstname+' '+lastname, 
-                password, 
-                status: 'active', 
-                role: 'feeder'
-    })
-        // console.log(username, password);
+        const response = await axiosInstance.post('/api/v1/auth/register', {
+            email, 
+            username: firstname + ' ' + lastname, 
+            password, 
+            status: 'active', 
+            role: 'feeder'
+        });
+
         if (!response) {
-            return { message: 'sorry unable to connect' }
+            return { success: false, error: 'Sorry, unable to connect' };
         }
 
-        if (response?.status != 200) {
-            return { success: false, error: response.statusText}
+        if (response?.status !== 200) {
+            return { success: false, error: response.statusText };
         }
-
-        // console.log(response)
 
         if (response.status === 200) {
-            redirect('/sign-in');
+            return { 
+                success: true, 
+                redirect: '/sign-in',
+                message: 'Account created successfully! Please sign in.'
+            };
         }
 
-        // const { access_token } = response.data;
-
-        
-        // console.log(access_token);
-
-        // store token
-        // localStorage.setItem("token", access_token);
-        // toast.success("Successfully signed in");
-        return response.data; 
+        return { success: false, error: 'Registration failed' };
         
     } catch (error) {
-        console.error('Login failed', error)
-        throw error;
-        
-    };
-}
+        const axiosError = error as AxiosError;
 
+        console.error('registration failed', axiosError);
 
+        // const errorMessage =
+        //     axiosError.response?.data || 'registration failed. Please try again.';
 
+        return {
+            success: false,
+            error: 'registration failed, pls try again',
+        };
+        }
+};
+
+export const logout = async (): Promise<void> => {
+    try {
+        await axiosInstance.post('/api/v1/logout');
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        const cookiesStore = await cookies();
+        cookiesStore.delete('token');
+        cookiesStore.delete('refresh_token');
+        redirect('/sign-in');
+    }
+};
+
+// Helper function for consistent API response handling
 export const getBuyers = async () => {
     try {
-        const response = await axiosInstance.get('/buyers')
-        if (!response){
-            return {message: "Sorry, unable to fetch buyers"};
-        }
-        if (response?.status != 200) {
-            return { success: false, error: response.statusText}
-        }
-        if (response?.status === 200) {
-            return response.data
+        const response = await axiosInstance.get('/buyers');
+        
+        if (!response) {
+            return { success: false, error: "Sorry, unable to fetch buyers" };
         }
         
-        // console.log(response)
-
-    } catch (error) {
-        console.log(error);
-        if (error instanceof Error) {
-          return { success: false, error: error.message };
+        if (response?.status !== 200) {
+            return { success: false, error: response.statusText };
         }
-        return { success: false, error: String(error) };
-      }
-}
+        
+        return { success: true, data: response.data };
+        
+    } catch (error) {
+        const axiosError = error as AxiosError;
 
+        console.error('failed to fetch buyers', axiosError);
+
+        const errorMessage =
+            axiosError.response?.data || 'axios error for fetching buyers';
+
+        return {
+            success: false,
+            error: errorMessage,
+        };
+}
+};
 
 export const getCoops = async () => {
     try {
-        const response = await axiosInstance.get('/coops')
-        if (!response){
-            return {message: "Sorry, unable to fetch coops"};
+        const response = await axiosInstance.get('/coops/');
+        
+        if (!response) {
+            return { success: false, error: "Sorry, unable to fetch coops" };
         }
-        if (response?.status != 200) {
-            return { success: false, error: response.statusText}
+        
+        if (response?.status !== 200) {
+            return { success: false, error: response.statusText };
         }
 
-        // const data =  response.data;
-
-        // // ensure uniqueness based on coop name
-        // const uniqueCoops = Array.isArray(data)
-        // ? [ ...new Map(data.map(coop => [coop.coop_name, coop])).values()]
-        // : [];
-
-        // return uniqueCoops;
-
-        return response.data;
+        return { success: true, data: response.data };
+        
     } catch (error) {
-        console.log(error);
-        if (error instanceof Error) {
-          return { success: false, error: error.message };
-        }
-        return { success: false, error: String(error) };
-      }
-}
+        console.error('Failed to fetch coops:', error);
+        return { 
+            success: false, 
+            error: error || 'Failed to fetch coops'
+        };
+    }
+};
 
