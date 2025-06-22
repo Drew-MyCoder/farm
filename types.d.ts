@@ -6,7 +6,25 @@ interface AuthCredentials {
   }
 
 
-  type CoopData = {
+// interface AuthResult {
+//   success: boolean;
+//   error?: unknown;
+//   redirect?: string;
+//   redirectUrl?: string;
+//   message?: string;
+//   user?: any;
+// }
+
+interface AuthResponse {
+    success: boolean;
+    error?: string;
+    redirect?: string;
+    redirectUrl?: string;
+    message?: string;
+}
+
+
+type CoopData = {
     id: number;
     parent_id: number | null;
     status: string;
@@ -49,3 +67,29 @@ interface AuthCredentials {
   updated_at: string
   by: string
   }
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (token: string, userData: User) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
+  refreshToken: () => Promise<boolean>;
+}
+
+
+interface AuthGuardProps {
+  children: React.ReactNode;
+  requiredRole?: 'admin' | 'feeder' | 'counter';
+  fallbackUrl?: string;
+}
+
+
