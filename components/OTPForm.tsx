@@ -66,7 +66,7 @@ const storeAuthData = (authData: VerifyResponse) => {
     
     // console.log('Auth data stored successfully:', userData);
     return userData;
-  } catch (error) {
+  } catch{
     // console.error('Error storing auth data:', error);
     return null;
   }
@@ -90,7 +90,7 @@ const clearAuthData = () => {
     
     console.log('Auth data cleared successfully');
     return true;
-  } catch (error) {
+  } catch {
     // console.error('Error clearing auth data:', error);
     return false;
   }

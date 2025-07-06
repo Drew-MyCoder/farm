@@ -31,7 +31,7 @@ const getUserDataFromCookies = (): User => {
       return userData;
     }
     return null;
-  } catch (error) {
+  } catch  {
     // console.error('Error parsing user data from cookies:', error);
     return null;
   }
@@ -56,7 +56,7 @@ const clearAllAuthData = () => {
     
     // console.log('All auth data cleared successfully');
     return true;
-  } catch (error) {
+  } catch {
     // console.error('Error clearing auth data:', error);
     return false;
   }

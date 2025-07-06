@@ -133,7 +133,7 @@ export default function EggUpdatePage() {
       setCoops([]); // Set empty array as fallback
       // setError("Unexpected response format from server");
     }
-  } catch (error) {
+  } catch {
     // console.error('Error fetching coops:', error);
     setCoops([]); // Set empty array on error
     // setError("Failed to load coops. Please try again.");
@@ -245,7 +245,7 @@ export default function EggUpdatePage() {
 
       // Optionally redirect to a dashboard or egg records page
       // router.push("/dashboard/eggs")
-    } catch (error) {
+    } catch{
       // console.error("Error saving egg data:", error)
 
       toast.error('Failed to load update. Please try again.', {

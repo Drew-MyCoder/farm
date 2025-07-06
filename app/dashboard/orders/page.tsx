@@ -60,7 +60,7 @@ export default function OrdersPage() {
         // console.error('Invalid response format:', response);
         setData([]); // Set empty array as fallback
       }
-    } catch (error) {
+    } catch{
       // console.error('Error fetching buyers:', error);
       setData([]); // Set empty array on error
     }

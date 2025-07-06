@@ -52,7 +52,7 @@ export default function EggsPage() {
       setEggRecords([]); // Set empty array as fallback
       setError("Unexpected response format from server");
     }
-  } catch (error) {
+  } catch{
     // console.error('Error fetching coops:', error);
     setEggRecords([]); // Set empty array on error
     setError("Failed to load coops. Please try again.");
