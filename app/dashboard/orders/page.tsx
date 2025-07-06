@@ -287,6 +287,7 @@ export default function OrdersPage() {
                   value={newOrder.name}
                   onChange={(e) => setNewOrder({ ...newOrder, name: e.target.value })}
                   placeholder="Customer name"
+                  required
                 />
               </div>
 
@@ -339,6 +340,7 @@ export default function OrdersPage() {
                       })
                     }}
                     placeholder="Number of crates"
+                    required
                   />
                 </div>
                 <div className="grid gap-2">
@@ -350,6 +352,7 @@ export default function OrdersPage() {
                     value={newOrder.amount}
                     onChange={(e) => setNewOrder({ ...newOrder, amount: Number.parseFloat(e.target.value) || 0 })}
                     placeholder="Total amount"
+                    required
                   />
                 </div>
               </div>
