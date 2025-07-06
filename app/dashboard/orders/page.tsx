@@ -275,12 +275,13 @@ export default function OrdersPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[525px]">
+            <form>
             <DialogHeader>
               <DialogTitle>Create New Order</DialogTitle>
               <DialogDescription>Add a new customer order. Click save when you&apos;re done.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <form>
+              
               <div className="grid gap-2">
                 <Label htmlFor="name">Customer Name</Label>
                 <Input
@@ -376,7 +377,7 @@ export default function OrdersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              </form>
+              
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsNewOrderDialogOpen(false)}>
@@ -384,6 +385,7 @@ export default function OrdersPage() {
               </Button>
               <Button onClick={handleCreateOrder}>Create Order</Button>
             </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </DashboardHeader>
