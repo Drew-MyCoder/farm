@@ -287,7 +287,7 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
         username: formData.firstname + ' ' + formData.lastname
       });
       
-      console.log('Resend OTP response:', response.data);
+      // console.log('Resend OTP response:', response.data);
       
       if (response.data?.message || response.data?.email) {
         const newUserData = {
@@ -297,13 +297,13 @@ const OTPForm = ({ serverOtpData }: { serverOtpData?: OtpData | null }) => {
         };
         
         setUserData(newUserData);
-        console.log('Updated user data after resend:', newUserData);
+        // console.log('Updated user data after resend:', newUserData);
       }
       
       setStatus({ type: 'success', message: 'New OTP sent successfully!' });
       toast.success("New OTP sent successfully!");
     } catch (error: unknown) {
-      console.error('Resend OTP error:', error);
+      // console.error('Resend OTP error:', error);
       
       let errorMessage = 'Failed to resend OTP. Please try again later.';
       

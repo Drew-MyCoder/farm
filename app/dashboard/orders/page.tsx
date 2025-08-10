@@ -126,6 +126,24 @@ export default function OrdersPage() {
     const id = Math.max(...data.map((o) => o.id), 0) + 1
     const now = new Date().toISOString()
 
+    if (!newOrder.name.trim()) {
+      setStatus({ type: 'error', message: 'name is required' });
+      setSubmitting(false);
+      return;
+    }
+
+    if (!newOrder.crates_desired || newOrder.crates_desired <= 0) {
+      setStatus({ type: 'error', message: 'crates ordered is required' });
+      setSubmitting(false);
+      return;
+    }
+
+    if (!newOrder.amount || newOrder.amount <= 0) {
+      setStatus({ type: 'error', message: 'name is required' });
+      setSubmitting(false);
+      return;
+    }
+
     setData([
       ...data,
       {
